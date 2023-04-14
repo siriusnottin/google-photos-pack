@@ -1,7 +1,7 @@
 import * as coda from "@codahq/packs-sdk";
 export const pack = coda.newPack();
 
-const ApiBaseUrl = "https://photoslibrary.googleapis.com/v1"
+const ApiBaseUrl = "https://photoslibrary.googleapis.com/v1";
 
 pack.addNetworkDomain("googleapis.com");
 
@@ -120,11 +120,7 @@ pack.addSyncTable({
   formula: {
     name: "SyncPhotos",
     description: "Sync all photos from the user's library.",
-    parameters: [
-      MediaDateRangeParam,
-      MediaCategoriesParam,
-      MediaFavoritesParam,
-    ],
+    parameters: [MediaDateRangeParam, MediaCategoriesParam, MediaFavoritesParam],
     execute: async function ([dateRange, categories, favorite], context) {
       let url = `${ApiBaseUrl}/mediaItems:search`;
 
@@ -182,9 +178,7 @@ pack.addSyncTable({
           featureFilter: (favorite) ? { includedFeatures: ["FAVORITES"] } : undefined,
           contentFilter: (categories) ? { includedContentCategories: categories.map(category => (MediasContentCategoriesList[category])) } : undefined,
         },
-      }
-      if (context.sync.continuation?.nextPageToken) {
-        payload.pageToken = context.sync.continuation.nextPageToken;
+        pageToken: (context.sync.continuation?.nextPageToken) ? context.sync.continuation.nextPageToken : undefined,
       }
       let response = await context.fetcher.fetch({
         method: "POST",
@@ -216,35 +210,6 @@ pack.addSyncTable({
     }
   },
 });
-
-// pack.addFormula({
-//   name: "GetMedia",
-//   description: "Get a media from user's library.",
-//   parameters: [
-//     coda.makeParameter({
-//       type: coda.ParameterType.String,
-//       name: "mediaId",
-//       description: "The id of the media."
-//     }),
-//   ],
-//   resultType: coda.ValueType.Object,
-//   schema: MediaSchema,
-//   cacheTtlSecs: 0,
-//   execute: async function ([mediaId], context) {
-//     let url = `${ApiBaseUrl}/mediaItems/${mediaId}`;
-//     let response = await context.fetcher.fetch({
-//       method: "GET",
-//       url: url,
-//       cacheTtlSecs: 0,
-//     });
-//     return response.body;
-//   }
-// })
-
-// pack.addColumnFormat({
-//   name: "Photo",
-//   formulaName: "GetMedia",
-// });
 
 const MediaReferenceSchema = coda.makeReferenceSchemaFromObjectSchema(MediaSchema, "Photo");
 
@@ -331,18 +296,3 @@ pack.addSyncTable({
     }
   }
 });
-
-// const MediaAlbumParam = coda.makeParameter({
-//   type: coda.ParameterType.String,
-//   name: "album",
-//   description: "Filter by album.",
-//   autocomplete: async function (context, search) {
-//     let url = `${ApiBaseUrl}/albums`;
-//     let response = await context.fetcher.fetch({
-//       method: "GET",
-//       url: url,
-//     });
-//     let albums = response.body.albums;
-//     return coda.autocompleteSearchObjects(search, albums, "title", "id")
-//   }
-// });
