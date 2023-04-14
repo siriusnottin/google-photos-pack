@@ -252,46 +252,46 @@ pack.addSyncTable({
     parameters: [],
     execute: async function ([], context) {
       let baseUrl = `${ApiBaseUrl}/albums`;
-      let continuation = context.sync.continuation;
-      if (continuation) {
-        baseUrl = coda.withQueryParams(baseUrl, { pageToken: continuation.nextAlbumsPageToken })
+      if (context.sync.continuation) {
+        baseUrl = coda.withQueryParams(baseUrl, { pageToken: context.sync.continuation.albumsToken })
       };
-      let response = await context.fetcher.fetch({
+      const response = await context.fetcher.fetch({
         method: "GET",
         url: baseUrl,
       });
-      let albums = response.body.albums;
-      for (let album of albums) {
+
+      let continuation;
+      if (response.body.nextPageToken) {
+        continuation = {
+          albumsToken: response.body.nextPageToken,
+          AlbumItemsToken: undefined,
+        };
+      };
+
+      const albums = await response.body.albums;
+      for (const album of albums) {
         // we want to search for all medias in the current album.
-        let baseUrl = `${ApiBaseUrl}/mediaItems:search`
-        let body = { albumId: album.id, pageToken: '' };
-        if (continuation && continuation.nextAlbumsMediaItemsPageToken) {
-          body.pageToken = continuation.nextAlbumsMediaItemsPageToken;
-        }
-        let response = await context.fetcher.fetch({
+        let baseUrl = coda.withQueryParams(`${ApiBaseUrl}/mediaItems:search`, { pageSize: 5 });
+        if (context.sync.continuation) {
+          baseUrl = coda.withQueryParams(baseUrl, { pageToken: context.sync.continuation.AlbumItemsToken })
+        };
+        debugger;
+        const body = { albumId: album.id };
+        const mediaItemsInAlbum = await context.fetcher.fetch({
           method: "POST",
           url: baseUrl,
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(body)
         });
-        album.photos = response.body.mediaItems;
-        album.coverPhoto = album.coverPhotoBaseUrl + "=w2048-h1024"
-      }
-      let nextAlbumsPageToken = response.body.nextPageToken;
-      let nextAlbumsMediaItemsPageToken = null;
-      if (nextAlbumsPageToken) {
-        nextAlbumsMediaItemsPageToken = albums[albums.length - 1].photos[albums[albums.length - 1].photos.length - 1].id;
-      }
-      let continuationTokens = null;
-      if (nextAlbumsPageToken || nextAlbumsMediaItemsPageToken) {
-        continuationTokens = {
-          nextAlbumsPageToken,
-          nextAlbumsMediaItemsPageToken,
+        if (mediaItemsInAlbum.body.nextPageToken) {
+          continuation.AlbumItemsToken = mediaItemsInAlbum.body.nextPageToken;
         };
+        album.photos = [];
+        album.coverPhoto = album.coverPhotoBaseUrl + "=w2048-h1024"
       }
       return {
         result: albums,
-        continuation: continuationTokens,
+        continuation: continuation,
       };
     }
   }
