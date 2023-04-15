@@ -46,7 +46,7 @@ const MediaSchema = coda.makeObjectSchema({
     height: { type: coda.ValueType.Number },
     image: {
       type: coda.ValueType.String,
-      codaType: coda.ValueHintType.ImageReference,
+      codaType: coda.ValueHintType.ImageAttachment,
     },
     url: {
       type: coda.ValueType.String,
@@ -232,7 +232,7 @@ const AlbumSchema = coda.makeObjectSchema({
     },
     coverPhoto: {
       type: coda.ValueType.String,
-      codaType: coda.ValueHintType.ImageReference,
+      codaType: coda.ValueHintType.ImageAttachment,
     },
   },
   displayProperty: "title",
