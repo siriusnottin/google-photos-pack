@@ -220,10 +220,10 @@ const AlbumSchema = coda.makeObjectSchema({
       fromKey: "id",
     },
     title: { type: coda.ValueType.String },
-    // medias: {
-    //   type: coda.ValueType.Array,
-    //   items: MediaReferenceSchema
-    // },
+    medias: {
+      type: coda.ValueType.Array,
+      items: MediaReferenceSchema
+    },
     url: {
       type: coda.ValueType.String,
       description: "Google Photos URL for the album.",
