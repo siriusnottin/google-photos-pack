@@ -101,7 +101,7 @@ const MediasContentCategoriesList = {
 const MediaCategoriesParam = coda.makeParameter({
   type: coda.ParameterType.StringArray,
   name: "categories",
-  description: "Filter by photos categories.",
+  description: "Filter by medias categories.",
   optional: true,
   autocomplete: Object.keys(MediasContentCategoriesList)
 });
@@ -109,17 +109,17 @@ const MediaCategoriesParam = coda.makeParameter({
 const MediaFavoritesParam = coda.makeParameter({
   type: coda.ParameterType.Boolean,
   name: "favorite",
-  description: "Filter by favorites photos.",
+  description: "Filter by favorites medias.",
   optional: true,
 });
 
 pack.addSyncTable({
-  name: "Photos",
+  name: "Medias",
   schema: MediaSchema,
-  identityName: "Photo",
+  identityName: "Media",
   formula: {
-    name: "SyncPhotos",
-    description: "Sync photos from the user's library.",
+    name: "SyncMedias",
+    description: "Sync medias from the user's library.",
     parameters: [MediaDateRangeParam, MediaCategoriesParam, MediaFavoritesParam],
     execute: async function ([dateRange, categories, favorite], context) {
       let url = `${ApiBaseUrl}/mediaItems:search`;
@@ -211,7 +211,7 @@ pack.addSyncTable({
   },
 });
 
-const MediaReferenceSchema = coda.makeReferenceSchemaFromObjectSchema(MediaSchema, "Photo");
+const MediaReferenceSchema = coda.makeReferenceSchemaFromObjectSchema(MediaSchema, "Media");
 
 const AlbumSchema = coda.makeObjectSchema({
   properties: {
@@ -220,7 +220,7 @@ const AlbumSchema = coda.makeObjectSchema({
       fromKey: "id",
     },
     title: { type: coda.ValueType.String },
-    // photos: {
+    // medias: {
     //   type: coda.ValueType.Array,
     //   items: MediaReferenceSchema
     // },
@@ -284,7 +284,7 @@ pack.addSyncTable({
         // if (mediaItemsInAlbumResponse.body.nextPageToken) {
         //   continuation.AlbumMediaItemsNextPageToken = mediaItemsInAlbumResponse.body.nextPageToken;
         // };
-        album.photos = [];
+        album.medias = [];
         album.coverPhoto = album.coverPhotoBaseUrl + "=w2048-h1024"
       }
       return {
