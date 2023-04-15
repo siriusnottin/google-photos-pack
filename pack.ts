@@ -251,25 +251,24 @@ pack.addSyncTable({
     description: "Sync all albums.",
     parameters: [],
     execute: async function ([], context) {
-      let baseUrl = `${ApiBaseUrl}/albums`;
+      let url = `${ApiBaseUrl}/albums`;
+
       if (context.sync.continuation) {
-        baseUrl = coda.withQueryParams(baseUrl, { pageToken: context.sync.continuation.albumsToken })
+        url = coda.withQueryParams(url, { pageToken: context.sync.continuation })
       };
-      const response = await context.fetcher.fetch({
+
+      const AlbumsResponse = await context.fetcher.fetch({
         method: "GET",
-        url: baseUrl,
+        url,
       });
 
-      let continuation;
-      if (response.body.nextPageToken) {
-        continuation = {
-          albumsToken: response.body.nextPageToken,
-          AlbumItemsToken: undefined,
-        };
+      let albumsContinuation;
+      if (AlbumsResponse.body.nextPageToken) {
+        albumsContinuation = AlbumsResponse.body.nextPageToken
       };
 
-      const albums = await response.body.albums;
-      for (const album of albums) {
+      const Albums = await AlbumsResponse.body.albums;
+      for (const album of Albums) {
         // we want to search for all medias in the current album.
         let baseUrl = coda.withQueryParams(`${ApiBaseUrl}/mediaItems:search`, { pageSize: 5 });
         if (context.sync.continuation) {
@@ -290,8 +289,8 @@ pack.addSyncTable({
         album.coverPhoto = album.coverPhotoBaseUrl + "=w2048-h1024"
       }
       return {
-        result: albums,
-        continuation: continuation,
+        result: Albums,
+        continuation: albumsContinuation,
       };
     }
   }
