@@ -119,7 +119,7 @@ pack.addSyncTable({
   identityName: "Photo",
   formula: {
     name: "SyncPhotos",
-    description: "Sync all photos from the user's library.",
+    description: "Sync photos from the user's library.",
     parameters: [MediaDateRangeParam, MediaCategoriesParam, MediaFavoritesParam],
     execute: async function ([dateRange, categories, favorite], context) {
       let url = `${ApiBaseUrl}/mediaItems:search`;
