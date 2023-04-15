@@ -1,7 +1,7 @@
 import * as coda from "@codahq/packs-sdk";
 export const pack = coda.newPack();
 
-const ApiBaseUrl = "https://photoslibrary.googleapis.com/v1"
+const ApiBaseUrl = "https://photoslibrary.googleapis.com/v1";
 
 pack.addNetworkDomain("googleapis.com");
 
@@ -119,12 +119,8 @@ pack.addSyncTable({
   identityName: "Photo",
   formula: {
     name: "SyncPhotos",
-    description: "Sync all photos from the user's library.",
-    parameters: [
-      MediaDateRangeParam,
-      MediaCategoriesParam,
-      MediaFavoritesParam,
-    ],
+    description: "Sync photos from the user's library.",
+    parameters: [MediaDateRangeParam, MediaCategoriesParam, MediaFavoritesParam],
     execute: async function ([dateRange, categories, favorite], context) {
       let url = `${ApiBaseUrl}/mediaItems:search`;
 
@@ -182,9 +178,7 @@ pack.addSyncTable({
           featureFilter: (favorite) ? { includedFeatures: ["FAVORITES"] } : undefined,
           contentFilter: (categories) ? { includedContentCategories: categories.map(category => (MediasContentCategoriesList[category])) } : undefined,
         },
-      }
-      if (context.sync.continuation?.nextPageToken) {
-        payload.pageToken = context.sync.continuation.nextPageToken;
+        pageToken: (context.sync.continuation?.nextPageToken) ? context.sync.continuation.nextPageToken : undefined,
       }
       let response = await context.fetcher.fetch({
         method: "POST",
@@ -217,35 +211,6 @@ pack.addSyncTable({
   },
 });
 
-// pack.addFormula({
-//   name: "GetMedia",
-//   description: "Get a media from user's library.",
-//   parameters: [
-//     coda.makeParameter({
-//       type: coda.ParameterType.String,
-//       name: "mediaId",
-//       description: "The id of the media."
-//     }),
-//   ],
-//   resultType: coda.ValueType.Object,
-//   schema: MediaSchema,
-//   cacheTtlSecs: 0,
-//   execute: async function ([mediaId], context) {
-//     let url = `${ApiBaseUrl}/mediaItems/${mediaId}`;
-//     let response = await context.fetcher.fetch({
-//       method: "GET",
-//       url: url,
-//       cacheTtlSecs: 0,
-//     });
-//     return response.body;
-//   }
-// })
-
-// pack.addColumnFormat({
-//   name: "Photo",
-//   formulaName: "GetMedia",
-// });
-
 const MediaReferenceSchema = coda.makeReferenceSchemaFromObjectSchema(MediaSchema, "Photo");
 
 const AlbumSchema = coda.makeObjectSchema({
@@ -255,10 +220,10 @@ const AlbumSchema = coda.makeObjectSchema({
       fromKey: "id",
     },
     title: { type: coda.ValueType.String },
-    photos: {
-      type: coda.ValueType.Array,
-      items: MediaReferenceSchema
-    },
+    // photos: {
+    //   type: coda.ValueType.Array,
+    //   items: MediaReferenceSchema
+    // },
     url: {
       type: coda.ValueType.String,
       description: "Google Photos URL for the album.",
@@ -286,63 +251,46 @@ pack.addSyncTable({
     description: "Sync all albums.",
     parameters: [],
     execute: async function ([], context) {
-      let baseUrl = `${ApiBaseUrl}/albums`;
-      let continuation = context.sync.continuation;
-      if (continuation) {
-        baseUrl = coda.withQueryParams(baseUrl, { pageToken: continuation.nextAlbumsPageToken })
+      let url = `${ApiBaseUrl}/albums`;
+
+      if (context.sync.continuation) {
+        url = coda.withQueryParams(url, { pageToken: context.sync.continuation })
       };
-      let response = await context.fetcher.fetch({
+
+      const AlbumsResponse = await context.fetcher.fetch({
         method: "GET",
-        url: baseUrl,
+        url,
       });
-      let albums = response.body.albums;
-      for (let album of albums) {
+
+      let albumsContinuation;
+      if (AlbumsResponse.body.nextPageToken) {
+        albumsContinuation = AlbumsResponse.body.nextPageToken
+      };
+
+      const Albums = await AlbumsResponse.body.albums;
+      for (const album of Albums) {
         // we want to search for all medias in the current album.
-        let baseUrl = `${ApiBaseUrl}/mediaItems:search`
-        let body = { albumId: album.id, pageToken: '' };
-        if (continuation && continuation.nextAlbumsMediaItemsPageToken) {
-          body.pageToken = continuation.nextAlbumsMediaItemsPageToken;
-        }
-        let response = await context.fetcher.fetch({
-          method: "POST",
-          url: baseUrl,
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(body)
-        });
-        album.photos = response.body.mediaItems;
+        // let url = coda.withQueryParams(`${ApiBaseUrl}/mediaItems:search`, { pageSize: 5 });
+        // let body = { albumId: album.id };
+        // let mediaItemsInAlbum = [];
+        // let mediaItemsNextPageToken;
+
+        // const mediaItemsInAlbumResponse = await context.fetcher.fetch({
+        //   method: "POST",
+        //   url,
+        //   headers: { "Content-Type": "application/json" },
+        //   body: JSON.stringify(body)
+        // });
+        // if (mediaItemsInAlbumResponse.body.nextPageToken) {
+        //   continuation.AlbumMediaItemsNextPageToken = mediaItemsInAlbumResponse.body.nextPageToken;
+        // };
+        album.photos = [];
         album.coverPhoto = album.coverPhotoBaseUrl + "=w2048-h1024"
       }
-      let nextAlbumsPageToken = response.body.nextPageToken;
-      let nextAlbumsMediaItemsPageToken = null;
-      if (nextAlbumsPageToken) {
-        nextAlbumsMediaItemsPageToken = albums[albums.length - 1].photos[albums[albums.length - 1].photos.length - 1].id;
-      }
-      let continuationTokens = null;
-      if (nextAlbumsPageToken || nextAlbumsMediaItemsPageToken) {
-        continuationTokens = {
-          nextAlbumsPageToken,
-          nextAlbumsMediaItemsPageToken,
-        };
-      }
       return {
-        result: albums,
-        continuation: continuationTokens,
+        result: Albums,
+        continuation: albumsContinuation,
       };
     }
   }
 });
-
-// const MediaAlbumParam = coda.makeParameter({
-//   type: coda.ParameterType.String,
-//   name: "album",
-//   description: "Filter by album.",
-//   autocomplete: async function (context, search) {
-//     let url = `${ApiBaseUrl}/albums`;
-//     let response = await context.fetcher.fetch({
-//       method: "GET",
-//       url: url,
-//     });
-//     let albums = response.body.albums;
-//     return coda.autocompleteSearchObjects(search, albums, "title", "id")
-//   }
-// });
