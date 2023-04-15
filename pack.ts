@@ -220,10 +220,10 @@ const AlbumSchema = coda.makeObjectSchema({
       fromKey: "id",
     },
     title: { type: coda.ValueType.String },
-    photos: {
-      type: coda.ValueType.Array,
-      items: MediaReferenceSchema
-    },
+    // photos: {
+    //   type: coda.ValueType.Array,
+    //   items: MediaReferenceSchema
+    // },
     url: {
       type: coda.ValueType.String,
       description: "Google Photos URL for the album.",
@@ -270,21 +270,20 @@ pack.addSyncTable({
       const Albums = await AlbumsResponse.body.albums;
       for (const album of Albums) {
         // we want to search for all medias in the current album.
-        let baseUrl = coda.withQueryParams(`${ApiBaseUrl}/mediaItems:search`, { pageSize: 5 });
-        if (context.sync.continuation) {
-          baseUrl = coda.withQueryParams(baseUrl, { pageToken: context.sync.continuation.AlbumItemsToken })
-        };
-        debugger;
-        const body = { albumId: album.id };
-        const mediaItemsInAlbum = await context.fetcher.fetch({
-          method: "POST",
-          url: baseUrl,
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(body)
-        });
-        if (mediaItemsInAlbum.body.nextPageToken) {
-          continuation.AlbumItemsToken = mediaItemsInAlbum.body.nextPageToken;
-        };
+        // let url = coda.withQueryParams(`${ApiBaseUrl}/mediaItems:search`, { pageSize: 5 });
+        // let body = { albumId: album.id };
+        // let mediaItemsInAlbum = [];
+        // let mediaItemsNextPageToken;
+
+        // const mediaItemsInAlbumResponse = await context.fetcher.fetch({
+        //   method: "POST",
+        //   url,
+        //   headers: { "Content-Type": "application/json" },
+        //   body: JSON.stringify(body)
+        // });
+        // if (mediaItemsInAlbumResponse.body.nextPageToken) {
+        //   continuation.AlbumMediaItemsNextPageToken = mediaItemsInAlbumResponse.body.nextPageToken;
+        // };
         album.photos = [];
         album.coverPhoto = album.coverPhotoBaseUrl + "=w2048-h1024"
       }
