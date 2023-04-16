@@ -104,6 +104,8 @@ pack.addSyncTable({
       let items = response.body.mediaItems;
       if (items && items.length > 0) {
         for (let item of items) {
+          // the api returns item.mediaMetadata.photo and item.mediaMetadata.video, we want to have a single mediaType property.
+          item.mediaType = (item.mediaMetadata.photo) ? "Photo" : "Video";
           item.creationTime = item.mediaMetadata.creationTime
           item.width = item.mediaMetadata.width
           item.height = item.mediaMetadata.height

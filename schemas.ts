@@ -8,6 +8,7 @@ export const MediaSchema = coda.makeObjectSchema({
       required: true
     },
     filename: { type: coda.ValueType.String, required: true },
+    mediaType: { type: coda.ValueType.String },
     description: { type: coda.ValueType.String },
     creationTime: {
       type: coda.ValueType.String,
