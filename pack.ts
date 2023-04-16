@@ -112,7 +112,9 @@ pack.addSyncTable({
           item.height = item.mediaMetadata.height
         };
       };
-      items = items.filter(item => (item.mediaType === mediaType));
+      if (mediaType) {
+        items = items.filter(item => (item.mediaType === mediaType));
+      }
       if (items && items.length > 0) {
         for (let item of items) {
           // We get the image only after we have filtered the items since it can become quite costly in ressources.
