@@ -1,7 +1,9 @@
 import * as coda from "@codahq/packs-sdk";
-export const pack = coda.newPack();
+import * as helpers from "./helpers";
+import * as params from "./params";
+import * as schemas from "./schemas";
 
-const ApiBaseUrl = "https://photoslibrary.googleapis.com/v1";
+export const pack = coda.newPack();
 
 pack.addNetworkDomain("googleapis.com");
 
@@ -18,7 +20,6 @@ pack.setUserAuthentication({
     prompt: "consent",
   },
 
-  // Determines the display name of the connected account.
   getConnectionName: async function (context) {
     let response = await context.fetcher.fetch({
       method: "GET",
@@ -29,100 +30,20 @@ pack.setUserAuthentication({
   },
 });
 
-const MediaSchema = coda.makeObjectSchema({
-  properties: {
-    mediaId: {
-      type: coda.ValueType.String,
-      fromKey: "id",
-      required: true
-    },
-    filename: { type: coda.ValueType.String, required: true },
-    description: { type: coda.ValueType.String },
-    creationTime: {
-      type: coda.ValueType.String,
-      codaType: coda.ValueHintType.DateTime
-    },
-    width: { type: coda.ValueType.Number },
-    height: { type: coda.ValueType.Number },
-    image: {
-      type: coda.ValueType.String,
-      codaType: coda.ValueHintType.ImageAttachment,
-    },
-    url: {
-      type: coda.ValueType.String,
-      description: "Google Photos URL for the media.",
-      codaType: coda.ValueHintType.Url,
-      fromKey: "productUrl",
-    },
-  },
-  displayProperty: "filename",
-  idProperty: "mediaId",
-  featuredProperties: [
-    "image"
-  ],
-});
-
-const MediaDateRangeParam = coda.makeParameter({
-  type: coda.ParameterType.DateArray,
-  name: "dateRange",
-  description: "The date range over which data should be fetched.",
-  suggestedValue: coda.PrecannedDateRange.LastWeek,
-});
-
-const MediasContentCategoriesList = {
-  Animals: "ANIMALS",
-  Fashion: "FASHION",
-  Landmarks: "LANDMARKS",
-  Receipts: "RECEIPTS",
-  Weddings: "WEDDINGS",
-  Arts: "ARTS",
-  Flowers: "FLOWERS",
-  Landscapes: "LANDSCAPES",
-  Screenshots: "SCREENSHOTS",
-  Whiteboards: "WHITEBOARDS",
-  Birthdays: "BIRTHDAYS",
-  Food: "FOOD",
-  Night: "NIGHT",
-  Selfies: "SELFIES",
-  Cityscapes: "CITYSCAPES",
-  Gardens: "GARDENS",
-  People: "PEOPLE",
-  Sport: "SPORT",
-  Crafts: "CRAFTS",
-  Holidays: "HOLIDAYS",
-  Performances: "PERFORMANCES",
-  Travel: "TRAVEL",
-  Documents: "DOCUMENTS",
-  Houses: "HOUSES",
-  Pets: "PETS",
-  Utility: "UTILITY"
-}
-
-const MediaCategoriesParam = coda.makeParameter({
-  type: coda.ParameterType.StringArray,
-  name: "categories",
-  description: "Filter by medias categories.",
-  optional: true,
-  autocomplete: Object.keys(MediasContentCategoriesList)
-});
-
-const MediaFavoritesParam = coda.makeParameter({
-  type: coda.ParameterType.Boolean,
-  name: "favorite",
-  description: "Filter by favorites medias.",
-  optional: true,
-});
-
 pack.addSyncTable({
   name: "Medias",
-  schema: MediaSchema,
+  schema: schemas.MediaSchema,
   identityName: "Media",
   formula: {
     name: "SyncMedias",
     description: "Sync medias from the user's library.",
-    parameters: [MediaDateRangeParam, MediaCategoriesParam, MediaFavoritesParam],
+    parameters: [
+      params.MediaDateRangeParam,
+      params.MediaCategoriesParam,
+      params.MediaFavoritesParam
+    ],
     execute: async function ([dateRange, categories, favorite], context) {
-      let url = `${ApiBaseUrl}/mediaItems:search`;
+      let url = `${helpers.ApiUrl}/mediaItems:search`;
 
       function formatDate(date: Date, dateFormatter: Intl.DateTimeFormat) {
         const dateParts = dateFormatter.formatToParts(date);
@@ -163,7 +84,7 @@ pack.addSyncTable({
             includedContentCategories: string[],
           };
         };
-        pageToken?: string;
+        pageToken?: undefined | string;
       };
 
       let payload: RequestPayload = {
@@ -176,7 +97,7 @@ pack.addSyncTable({
             }]
           },
           featureFilter: (favorite) ? { includedFeatures: ["FAVORITES"] } : undefined,
-          contentFilter: (categories) ? { includedContentCategories: categories.map(category => (MediasContentCategoriesList[category])) } : undefined,
+          contentFilter: (categories) ? { includedContentCategories: categories.map(category => (helpers.MediasContentCategoriesList[category])) } : undefined,
         },
         pageToken: (context.sync.continuation?.nextPageToken) ? context.sync.continuation.nextPageToken : undefined,
       }
@@ -211,47 +132,16 @@ pack.addSyncTable({
   },
 });
 
-const MediaReferenceSchema = coda.makeReferenceSchemaFromObjectSchema(MediaSchema, "Media");
-
-const AlbumSchema = coda.makeObjectSchema({
-  properties: {
-    albumId: {
-      type: coda.ValueType.String,
-      fromKey: "id",
-    },
-    title: { type: coda.ValueType.String },
-    medias: {
-      type: coda.ValueType.Array,
-      items: MediaReferenceSchema
-    },
-    url: {
-      type: coda.ValueType.String,
-      description: "Google Photos URL for the album.",
-      codaType: coda.ValueHintType.Url,
-      fromKey: "productUrl",
-    },
-    coverPhoto: {
-      type: coda.ValueType.String,
-      codaType: coda.ValueHintType.ImageAttachment,
-    },
-  },
-  displayProperty: "title",
-  idProperty: "albumId",
-  featuredProperties: [
-    "coverPhoto"
-  ]
-});
-
 pack.addSyncTable({
   name: "Albums",
-  schema: AlbumSchema,
+  schema: schemas.AlbumSchema,
   identityName: "Album",
   formula: {
     name: "SyncAlbums",
     description: "Sync all albums.",
     parameters: [],
     execute: async function ([], context) {
-      let url = `${ApiBaseUrl}/albums`;
+      let url = `${helpers.ApiUrl}/albums`;
 
       if (context.sync.continuation) {
         url = coda.withQueryParams(url, { pageToken: context.sync.continuation })
@@ -270,7 +160,7 @@ pack.addSyncTable({
       const Albums = await AlbumsResponse.body.albums;
       for (const album of Albums) {
         // we want to search for all medias in the current album.
-        // let url = coda.withQueryParams(`${ApiBaseUrl}/mediaItems:search`, { pageSize: 5 });
+        // let url = coda.withQueryParams(`${helpers.ApiUrl}/mediaItems:search`, { pageSize: 5 });
         // let body = { albumId: album.id };
         // let mediaItemsInAlbum = [];
         // let mediaItemsNextPageToken;
