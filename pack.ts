@@ -31,10 +31,11 @@ pack.addSyncTable({
     description: "Sync medias from the user's library.",
     parameters: [
       params.MediaDateRangeParam,
+      params.MediaTypeParam,
       params.MediaCategoriesParam,
       params.MediaFavoritesParam
     ],
-    execute: async function ([dateRange, categories, favorite], context) {
+    execute: async function ([dateRange, mediaType, categories, favorite], context) {
       let url = `${helpers.ApiUrl}/mediaItems:search`;
 
       function formatDate(date: Date, dateFormatter: Intl.DateTimeFormat) {
@@ -109,7 +110,13 @@ pack.addSyncTable({
           item.creationTime = item.mediaMetadata.creationTime
           item.width = item.mediaMetadata.width
           item.height = item.mediaMetadata.height
-          item.image = item.baseUrl + "=w2048-h1024"
+        };
+      };
+      items = items.filter(item => (item.mediaType === mediaType));
+      if (items && items.length > 0) {
+        for (let item of items) {
+          // We get the image only after we have filtered the items since it can become quite costly in ressources.
+          item.image = item.baseUrl + "=w2048-h1024"//TODO: add parameter for image sizes.
         };
       };
       let continuation;

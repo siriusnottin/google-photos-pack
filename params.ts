@@ -9,6 +9,14 @@ export const MediaDateRangeParam = coda.makeParameter({
   suggestedValue: coda.PrecannedDateRange.LastWeek,
 });
 
+export const MediaTypeParam = coda.makeParameter({
+  type: coda.ParameterType.String,
+  name: "mediaType",
+  description: "The type of media to fetch.",
+  autocomplete: ["Photo", "Video"],
+  optional: true,
+});
+
 export const MediaCategoriesParam = coda.makeParameter({
   type: coda.ParameterType.StringArray,
   name: "categories",
