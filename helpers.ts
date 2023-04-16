@@ -2,6 +2,19 @@ import * as coda from "@codahq/packs-sdk";
 
 export const ApiUrl = "https://photoslibrary.googleapis.com/v1";
 
+export async function getConnectionName(context: coda.ExecutionContext) {
+  let request: coda.FetchRequest = {
+    method: "GET",
+    url: "https://www.googleapis.com/oauth2/v1/userinfo",
+    headers: {
+      "Content-Type": "application/json",
+    },
+  };
+  let userResponse = await context.fetcher.fetch(request);
+  let user = userResponse.body;
+  return user.name as string;
+}
+
 export const MediasContentCategoriesList = {
   Animals: "ANIMALS",
   Fashion: "FASHION",

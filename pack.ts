@@ -19,15 +19,7 @@ pack.setUserAuthentication({
     access_type: "offline",
     prompt: "consent",
   },
-
-  getConnectionName: async function (context) {
-    let response = await context.fetcher.fetch({
-      method: "GET",
-      url: "https://www.googleapis.com/oauth2/v1/userinfo",
-    });
-    let user = response.body;
-    return user.name;
-  },
+  getConnectionName: helpers.getConnectionName,
 });
 
 pack.addSyncTable({
