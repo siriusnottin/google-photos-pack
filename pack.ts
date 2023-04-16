@@ -32,7 +32,7 @@ pack.addSyncTable({
     parameters: [
       params.MediaDateRangeParam,
       params.MediaTypeParam,
-      params.MediaCategoriesParam,
+      params.MediaCategoriesIncludeParam,
       params.MediaFavoritesParam
     ],
     execute: async function ([dateRange, mediaType, categories, favorite], context) {

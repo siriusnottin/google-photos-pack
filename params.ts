@@ -17,7 +17,7 @@ export const MediaTypeParam = coda.makeParameter({
   optional: true,
 });
 
-export const MediaCategoriesParam = coda.makeParameter({
+export const MediaCategoriesIncludeParam = coda.makeParameter({
   type: coda.ParameterType.StringArray,
   name: "categories",
   description: "Filter by medias categories.",
