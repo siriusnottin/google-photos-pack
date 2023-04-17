@@ -112,7 +112,7 @@ pack.addSyncTable({
           item.height = item.mediaMetadata.height
         };
       };
-      if (mediaType) {
+      if (mediaType && items) {
         items = items.filter(item => (item.mediaType === mediaType));
       }
       if (items && items.length > 0) {
