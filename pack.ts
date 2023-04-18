@@ -1,7 +1,8 @@
 import * as coda from "@codahq/packs-sdk";
 import * as helpers from "./helpers";
-import * as params from "./params";
 import * as schemas from "./schemas";
+import * as types from "./types";
+import * as params from "./params";
 
 export const pack = coda.newPack();
 
@@ -30,14 +31,14 @@ pack.addSyncTable({
     name: "SyncMedias",
     description: "Sync medias from the user's library.",
     parameters: [
-      params.MediaDateRangeParam,
-      params.MediaTypeParam,
-      params.MediaCategoriesIncludeParam,
-      params.MediaFavoritesParam
+      params.MediaDateRange,
+      params.MediaCategoriesIncludeOpt,
+      params.MediaCategoriesExcludeOpt,
+      params.MediaTypeOptional,
+      params.MediaFavoritesOptional,
+      params.MediaArchivedOptional,
     ],
-    execute: async function ([dateRange, mediaType, categories, favorite], context) {
-      let url = `${helpers.ApiUrl}/mediaItems:search`;
-
+    execute: async function ([dateRange, categoriesToInclude, categoriesToExclude, mediaType, favorite, archived], context) {
       function formatDate(date: Date, dateFormatter: Intl.DateTimeFormat) {
         const dateParts = dateFormatter.formatToParts(date);
         return {
@@ -53,85 +54,35 @@ pack.addSyncTable({
         day: "numeric",
       });
 
-      interface RequestPayload {
-        pageSize: number;
-        filters: {
-          dateFilter: {
-            ranges: {
-              startDate: {
-                year: string;
-                month: string;
-                day: string;
-              };
-              endDate: {
-                year: string;
-                month: string;
-                day: string;
-              };
-            }[];
-          };
-          featureFilter?: {
-            includedFeatures: string[],
-          };
-          contentFilter?: {
-            includedContentCategories: string[],
-          };
-        };
-        pageToken?: undefined | string;
+      let filters: types.MediaItemsFilter = {
+        dateFilter: {
+          ranges: [{
+            "startDate": formatDate(dateRange[0], dateFormatter),
+            "endDate": formatDate(dateRange[1], dateFormatter),
+          }]
+        },
       };
 
-      let payload: RequestPayload = {
-        pageSize: 100,
-        filters: {
-          dateFilter: {
-            ranges: [{
-              "startDate": formatDate(dateRange[0], dateFormatter),
-              "endDate": formatDate(dateRange[1], dateFormatter),
-            }]
-          },
-          featureFilter: (favorite) ? { includedFeatures: ["FAVORITES"] } : undefined,
-          contentFilter: (categories) ? { includedContentCategories: categories.map(category => (helpers.MediasContentCategoriesList[category])) } : undefined,
-        },
-        pageToken: (context.sync.continuation?.nextPageToken) ? context.sync.continuation.nextPageToken : undefined,
-      }
-      let response = await context.fetcher.fetch({
-        method: "POST",
-        url: url,
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(payload),
-      });
-      let items = response.body.mediaItems;
-      if (items && items.length > 0) {
-        for (let item of items) {
-          // the api returns item.mediaMetadata.photo and item.mediaMetadata.video, we want to have a single mediaType property.
-          item.mediaType = (item.mediaMetadata.photo) ? "Photo" : "Video";
-          item.creationTime = item.mediaMetadata.creationTime
-          item.width = item.mediaMetadata.width
-          item.height = item.mediaMetadata.height
-        };
-      };
-      if (mediaType && items) {
-        items = items.filter(item => (item.mediaType === mediaType));
-      }
-      if (items && items.length > 0) {
-        for (let item of items) {
-          // We get the image only after we have filtered the items since it can become quite costly in ressources.
-          item.image = item.baseUrl + "=w2048-h1024"//TODO: add parameter for image sizes.
-        };
-      };
-      let continuation;
-      if (response.body.nextPageToken) {
-        continuation = {
-          nextPageToken: response.body.nextPageToken
+      if (categoriesToInclude || categoriesToExclude) {
+        filters.contentFilter = {
+          includedContentCategories: (categoriesToInclude) ? categoriesToInclude.map((category) => types.MediasContentCategories[category]) : undefined,
+          excludedContentCategories: (categoriesToExclude) ? categoriesToExclude.map((category) => types.MediasContentCategories[category]) : undefined,
         };
       }
-      return {
-        result: items,
-        continuation: continuation,
-      };
-    }
+
+      if (mediaType) {
+        filters.mediaTypeFilter = { mediaTypes: [types.MediaTypes[mediaType]] };
+      }
+
+      if (favorite) {
+        filters.featureFilter = { includedFeatures: ["FAVORITES"] }
+      }
+
+      if (archived) { filters.includeArchivedMedia = archived }
+
+      return helpers.SyncMediaItems(context, filters);
+
+    },
   },
 });
 
@@ -144,46 +95,7 @@ pack.addSyncTable({
     description: "Sync all albums.",
     parameters: [],
     execute: async function ([], context) {
-      let url = `${helpers.ApiUrl}/albums`;
-
-      if (context.sync.continuation) {
-        url = coda.withQueryParams(url, { pageToken: context.sync.continuation })
-      };
-
-      const AlbumsResponse = await context.fetcher.fetch({
-        method: "GET",
-        url,
-      });
-
-      let albumsContinuation;
-      if (AlbumsResponse.body.nextPageToken) {
-        albumsContinuation = AlbumsResponse.body.nextPageToken
-      };
-
-      const Albums = await AlbumsResponse.body.albums;
-      for (const album of Albums) {
-        // we want to search for all medias in the current album.
-        // let url = coda.withQueryParams(`${helpers.ApiUrl}/mediaItems:search`, { pageSize: 5 });
-        // let body = { albumId: album.id };
-        // let mediaItemsInAlbum = [];
-        // let mediaItemsNextPageToken;
-
-        // const mediaItemsInAlbumResponse = await context.fetcher.fetch({
-        //   method: "POST",
-        //   url,
-        //   headers: { "Content-Type": "application/json" },
-        //   body: JSON.stringify(body)
-        // });
-        // if (mediaItemsInAlbumResponse.body.nextPageToken) {
-        //   continuation.AlbumMediaItemsNextPageToken = mediaItemsInAlbumResponse.body.nextPageToken;
-        // };
-        album.medias = [];
-        album.coverPhoto = album.coverPhotoBaseUrl + "=w2048-h1024"
-      }
-      return {
-        result: Albums,
-        continuation: albumsContinuation,
-      };
+      return helpers.syncAlbums(context);
     }
   }
 });
