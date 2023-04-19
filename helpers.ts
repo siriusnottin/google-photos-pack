@@ -17,6 +17,28 @@ export async function getConnectionName(context: coda.ExecutionContext) {
   return user.name as string;
 }
 
+// Parse the response from the API to the format we want to return
+// Matches the MediaSchema schema defined in ./schemas.ts
+function mediaItemsParser(mediaItems: types.MediaItemResponse[]): types.MediaItem[] {
+  return mediaItems.map((mediaItem) => {
+    let { id, filename, mimeType, description, productUrl } = mediaItem;
+    let { creationTime, photo, video, width, height } = mediaItem.mediaMetadata;
+    return {
+      mediaId: id,
+      filename,
+      mediaType: (photo) ? "Photo" : "Video",
+      mimeType,
+      description,
+      creationTime,
+      mediaMetadata: { photo, video },
+      width,
+      height,
+      image: `${mediaItem.baseUrl}=w2048-h1024`,
+      url: productUrl,
+    }
+  });
+}
+
 export async function SyncMediaItems(
   context: coda.SyncExecutionContext,
   filters?: types.MediaItemsFilter,
@@ -42,42 +64,37 @@ export async function SyncMediaItems(
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
   });
-  let mediaItemsRes = response.body.mediaItems as types.MediaItemResponse[];
   let nextPageToken;
   if (response.body.nextPageToken) {
     nextPageToken = response.body.nextPageToken;
   }
-  let result: types.MediaItem[];
 
-  if (!mediaItemsRes || mediaItemsRes.length === 0) {
-    return {
-      result: [],
-      continuation: undefined,
-    };
+  let result: types.MediaItem[] = [];
+  if (response.body.mediaItems) {
+    let mediaItemsRes = response.body.mediaItems as types.MediaItemResponse[];
+    result = mediaItemsParser(mediaItemsRes);
   }
-
-  result = mediaItemsRes.map((mediaItem) => {
-    let { id, filename, mimeType, description, productUrl } = mediaItem;
-    let { creationTime, photo, video, width, height } = mediaItem.mediaMetadata;
-    return {
-      mediaId: id,
-      filename,
-      mediaType: (photo) ? "Photo" : "Video",
-      mimeType,
-      description,
-      creationTime,
-      mediaMetadata: { photo, video },
-      width,
-      height,
-      image: `${mediaItem.baseUrl}=w2048-h1024`,
-      url: productUrl,
-    }
-  });
 
   return {
     result,
     continuation: nextPageToken ? { nextPageToken } : undefined,
   };
+}
+
+// Parse the response from the API to the format we want to return
+// Matches the AlbumSchema schema defined in ./schemas.ts
+function albumParser(albums: types.AlbumResponse[]): types.Album[] {
+  return albums.map((album) => {
+    let { id, title, productUrl, coverPhotoBaseUrl, coverPhotoMediaItemId } = album;
+    return {
+      albumId: id,
+      title,
+      url: productUrl,
+      mediaItems: [],
+      coverPhoto: `${coverPhotoBaseUrl}=w2048-h1024`,
+      coverPhotoMediaItem: coverPhotoMediaItemId,
+    }
+  });
 }
 
 export async function syncAlbums(
@@ -93,31 +110,15 @@ export async function syncAlbums(
     url,
     headers: { "Content-Type": "application/json" },
   });
-  let albumsRes = response.body.albums as types.AlbumResponse[];
   let nextPageToken;
   if (response.body.nextPageToken) {
     nextPageToken = response.body.nextPageToken;
   }
-  let result: types.Album[];
-
-  if (!albumsRes || albumsRes.length === 0) {
-    return {
-      result: [],
-      continuation: undefined,
-    };
+  let result: types.Album[] = [];
+  if (response.body.albums) {
+    let albumsRes = response.body.albums as types.AlbumResponse[];
+    result = albumParser(albumsRes);
   }
-
-  result = albumsRes.map((album) => {
-    let { id, title, productUrl, coverPhotoBaseUrl } = album;
-    return {
-      albumId: id,
-      title,
-      url: productUrl,
-      mediaItems: [],
-      coverPhoto: `${coverPhotoBaseUrl}=w2048-h1024`,
-      coverPhotoMediaItem: undefined,
-    }
-  });
 
   return {
     result,
