@@ -81,8 +81,6 @@ export interface MediaItem {
   mediaType: string;
   mimeType: string;
   description: string;
-  photoMetadata?: Photo;
-  videoMetadata?: Video;
   creationTime: string;
   width: number;
   height: number;
