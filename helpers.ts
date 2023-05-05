@@ -41,21 +41,17 @@ function mediaItemsParser(mediaItems: types.MediaItemResponse[]): types.MediaIte
 export async function SyncMediaItems(
   context: coda.SyncExecutionContext,
   filters?: types.MediaItemsFilter,
-  albumId?: string,
 ): Promise<coda.GenericSyncFormulaResult> {
-  if (filters && albumId || !filters && !albumId) {
-    throw new coda.UserVisibleError("Must provide either filters or albumId");
+  if (!filters) {
+    throw new coda.UserVisibleError("You must provide a filter to sync media items");
   }
   let { continuation } = context.sync;
   let body: types.GetMediaItemsPayload = { pageSize: 100 };
   if (continuation) {
     body.pageToken = continuation.nextPageToken as string;
   }
-  if (filters && !albumId) {
+  if (filters) {
     body.filters = filters;
-  }
-  if (albumId && !filters) {
-    body.albumId = albumId;
   }
   let response = await context.fetcher.fetch({
     method: "POST",
