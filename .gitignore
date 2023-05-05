@@ -1,6 +1,9 @@
 # Coda.io
 .coda*
 
+# Other
+*.paw
+
 # Logs
 logs
 *.log
