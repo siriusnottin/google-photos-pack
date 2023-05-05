@@ -70,13 +70,40 @@ export async function SyncMediaItems(
 
   let result: types.MediaItem[] = [];
   if (response.body.mediaItems) {
-    let mediaItemsRes = response.body.mediaItems as types.MediaItemResponse[];
-    result = mediaItemsParser(mediaItemsRes);
+    result = mediaItemsParser(response.body.mediaItems);
   }
 
   return {
     result,
     continuation: nextPageToken ? { nextPageToken } : undefined,
+  };
+}
+
+async function getMediaItems(
+  context: coda.ExecutionContext,
+  albumId: string,
+  continuation?: coda.Continuation | undefined,
+): Promise<any> {
+  let body: types.GetMediaItemsPayload = {
+    albumId,
+    pageSize: 100,
+  }
+  if (continuation) {
+    body.pageToken = continuation.nextMediaItemsPageToken as string;
+  }
+  let response = await context.fetcher.fetch({
+    method: "POST",
+    url: `${ApiUrl}/mediaItems:search`,
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  let nextMediaItemsPageToken;
+  if (response.body.nextPageToken) {
+    nextMediaItemsPageToken = response.body.nextPageToken;
+  }
+  return {
+    result: response.body?.mediaItems ? mediaItemsParser(response.body.mediaItems) : undefined,
+    continuation: nextMediaItemsPageToken ? { nextMediaItemsPageToken } : undefined,
   };
 }
 
@@ -101,26 +128,33 @@ export async function syncAlbums(
 ): Promise<coda.GenericSyncFormulaResult> {
   let url = `${ApiUrl}/albums`;
   let { continuation } = context.sync;
-  if (continuation) {
-    url = coda.withQueryParams(url, { pageToken: continuation.nextPageToken });
+  if (continuation && continuation.nextAlbumsPageToken) {
+    url = coda.withQueryParams(url, { pageToken: continuation.nextAlbumsPageToken });
   }
   let response = await context.fetcher.fetch({
     method: "GET",
     url,
     headers: { "Content-Type": "application/json" },
   });
-  let nextPageToken;
+  let nextAlbumsPageToken;
   if (response.body.nextPageToken) {
-    nextPageToken = response.body.nextPageToken;
+    nextAlbumsPageToken = response.body.nextPageToken;
   }
-  let result: types.Album[] = [];
+  let albums: types.Album[] = [];
   if (response.body.albums) {
     let albumsRes = response.body.albums as types.AlbumResponse[];
-    result = albumParser(albumsRes);
+    albums = albumParser(albumsRes);
+    albums.forEach(async (album) => {
+      do {
+        let mediaItemsRes = await getMediaItems(context, album.albumId, continuation);
+        ({ continuation } = mediaItemsRes);
+        album.mediaItems = mediaItemsRes.result;
+      } while (continuation && continuation.nextMediaItemsPageToken);
+    });
   }
 
   return {
-    result,
-    continuation: nextPageToken ? { nextPageToken } : undefined,
+    result: albums,
+    continuation: nextAlbumsPageToken ? { nextAlbumsPageToken } : undefined,
   };
 }
