@@ -1,6 +1,5 @@
 import * as coda from "@codahq/packs-sdk";
 import * as types from "./types";
-import { allowedNodeEnvironmentFlags } from "process";
 
 export const ApiUrl = "https://photoslibrary.googleapis.com/v1";
 
