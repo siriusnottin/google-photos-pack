@@ -133,7 +133,7 @@ export enum MediaTypes {
 
 // filter object when "searching" for media items
 export interface MediaItemsFilter {
-  dateFilter: {
+  dateFilter?: {
     ranges: {
       startDate: {
         year: string;
