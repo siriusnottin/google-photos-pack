@@ -1,4 +1,4 @@
-import { DateFilter } from "api/common/date-filter";
+import { DateFilter } from "../common/date-filter";
 import { MediaTypeFilter } from "./media-type-filter";
 import { ContentFilter } from "./content-filter";
 import { MediaItemsFilter } from "types/api-types";
