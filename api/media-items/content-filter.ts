@@ -1,4 +1,4 @@
-import { MediasContentCategories } from './api-types';
+import { MediasContentCategories } from 'types/api-types';
 
 export class ContentFilter {
 
