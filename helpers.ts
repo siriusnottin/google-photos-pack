@@ -1,5 +1,6 @@
 import * as coda from "@codahq/packs-sdk";
 import * as types from "types/pack-types";
+import GPhotos from "./api";
 
 export const ApiUrl = "https://photoslibrary.googleapis.com/v1";
 

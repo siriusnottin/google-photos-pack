@@ -3,6 +3,7 @@ import * as helpers from "./helpers";
 import * as schemas from "./schemas";
 import * as types from "./types/pack-types";
 import * as params from "./params";
+import GPhotos from "./api";
 
 export const pack = coda.newPack();
 
