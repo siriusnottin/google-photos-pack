@@ -37,43 +37,6 @@ export function mediaItemsParser(mediaItems: types.MediaItemResponse[]): types.M
   });
 }
 
-export async function SyncMediaItems(
-  context: coda.SyncExecutionContext,
-  filters?: types.MediaItemsFilter,
-): Promise<coda.GenericSyncFormulaResult> {
-  if (!filters) {
-    throw new coda.UserVisibleError("You must provide a filter to sync media items");
-  }
-  let { continuation } = context.sync;
-  let body: types.GetMediaItemsPayload = { pageSize: 100 };
-  if (continuation) {
-    body.pageToken = continuation.nextPageToken as string;
-  }
-  if (filters) {
-    body.filters = filters;
-  }
-  let response = await context.fetcher.fetch({
-    method: "POST",
-    url: `${ApiUrl}/mediaItems:search`,
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
-  });
-  let nextPageToken;
-  if (response.body.nextPageToken) {
-    nextPageToken = response.body.nextPageToken;
-  }
-
-  let result: types.MediaItem[] = [];
-  if (response.body.mediaItems) {
-    result = mediaItemsParser(response.body.mediaItems);
-  }
-
-  return {
-    result,
-    continuation: nextPageToken ? { nextPageToken } : undefined,
-  };
-}
-
 async function getMediaItems(
   context: coda.ExecutionContext,
   albumId: string,

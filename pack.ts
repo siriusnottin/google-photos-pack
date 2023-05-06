@@ -81,8 +81,16 @@ pack.addSyncTable({
 
       if (archived) { filters.includeArchivedMedia = archived }
 
-      return helpers.SyncMediaItems(context, filters);
+      if (!filters) {
+        throw new coda.UserVisibleError("You must provide a filter to sync media items");
+      }
 
+      const { nextPageToken, mediaItems }: { nextPageToken?: string, mediaItems?: types.MediaItemResponse[] } = (await new GPhotos(context).mediaItems.search(filters, 100, (context.sync.continuation?.nextPageToken as string | undefined)))?.body ?? {};
+
+      return {
+        result: mediaItems ? helpers.mediaItemsParser(mediaItems) : null,
+        continuation: { nextPageToken }
+      }
     },
   },
 });
