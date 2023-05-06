@@ -1,7 +1,6 @@
 import * as coda from "@codahq/packs-sdk";
-import * as types from "./types";
-
-export const ApiUrl = "https://photoslibrary.googleapis.com/v1";
+import * as types from "types/pack-types";
+import GPhotos from "./api";
 
 export async function getConnectionName(context: coda.ExecutionContext) {
   let request: coda.FetchRequest = {
@@ -18,7 +17,7 @@ export async function getConnectionName(context: coda.ExecutionContext) {
 
 // Parse the response from the API to the format we want to return
 // Matches the MediaSchema schema defined in ./schemas.ts
-function mediaItemsParser(mediaItems: types.MediaItemResponse[]): types.MediaItem[] {
+export function mediaItemsParser(mediaItems: types.MediaItemResponse[]): types.MediaItem[] {
   return mediaItems.map((mediaItem) => {
     let { id, filename, mimeType, description, productUrl } = mediaItem;
     let { creationTime, photo, video, width, height } = mediaItem.mediaMetadata;
@@ -36,47 +35,6 @@ function mediaItemsParser(mediaItems: types.MediaItemResponse[]): types.MediaIte
       url: productUrl,
     }
   });
-}
-
-export async function SyncMediaItems(
-  context: coda.SyncExecutionContext,
-  filters?: types.MediaItemsFilter,
-  albumId?: string,
-): Promise<coda.GenericSyncFormulaResult> {
-  if (filters && albumId || !filters && !albumId) {
-    throw new coda.UserVisibleError("Must provide either filters or albumId");
-  }
-  let { continuation } = context.sync;
-  let body: types.GetMediaItemsPayload = { pageSize: 100 };
-  if (continuation) {
-    body.pageToken = continuation.nextPageToken as string;
-  }
-  if (filters && !albumId) {
-    body.filters = filters;
-  }
-  if (albumId && !filters) {
-    body.albumId = albumId;
-  }
-  let response = await context.fetcher.fetch({
-    method: "POST",
-    url: `${ApiUrl}/mediaItems:search`,
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
-  });
-  let nextPageToken;
-  if (response.body.nextPageToken) {
-    nextPageToken = response.body.nextPageToken;
-  }
-
-  let result: types.MediaItem[] = [];
-  if (response.body.mediaItems) {
-    result = mediaItemsParser(response.body.mediaItems);
-  }
-
-  return {
-    result,
-    continuation: nextPageToken ? { nextPageToken } : undefined,
-  };
 }
 
 async function getMediaItems(

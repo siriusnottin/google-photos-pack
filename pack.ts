@@ -1,8 +1,9 @@
 import * as coda from "@codahq/packs-sdk";
 import * as helpers from "./helpers";
 import * as schemas from "./schemas";
-import * as types from "./types";
+import * as types from "./types/pack-types";
 import * as params from "./params";
+import GPhotos from "./api";
 
 export const pack = coda.newPack();
 
@@ -80,8 +81,16 @@ pack.addSyncTable({
 
       if (archived) { filters.includeArchivedMedia = archived }
 
-      return helpers.SyncMediaItems(context, filters);
+      if (!filters) {
+        throw new coda.UserVisibleError("You must provide a filter to sync media items");
+      }
 
+      const { nextPageToken, mediaItems }: { nextPageToken?: string, mediaItems?: types.MediaItemResponse[] } = (await new GPhotos(context).mediaItems.search(filters, 100, (context.sync.continuation?.nextPageToken as string | undefined)))?.body ?? {};
+
+      return {
+        result: mediaItems ? helpers.mediaItemsParser(mediaItems) : null,
+        continuation: { nextPageToken }
+      }
     },
   },
 });

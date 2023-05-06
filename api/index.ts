@@ -1,0 +1,17 @@
+import * as coda from "@codahq/packs-sdk";
+import { Transport } from "./transport";
+import { Albums } from "./albums";
+import { MediaItems } from "./media-items";
+export default class GPhotos {
+
+  public readonly transport: Transport;
+  public readonly albums: Albums;
+  public readonly mediaItems: MediaItems;
+
+  constructor(public readonly context: coda.ExecutionContext) {
+    this.transport = new Transport(context);
+    this.albums = new Albums(this.transport);
+    this.mediaItems = new MediaItems(this.transport);
+  }
+
+}

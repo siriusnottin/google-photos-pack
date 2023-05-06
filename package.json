@@ -2,14 +2,15 @@
   "name": "google-photos",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "index.ts",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@codahq/packs-sdk": "^1.3.3"
+    "@codahq/packs-sdk": "^1.3.3",
+    "moment": "^2.29.4"
   },
   "devDependencies": {
     "@types/chai": "^4.3.4",
