@@ -72,7 +72,7 @@ export interface AlbumResponse {
   coverPhotoMediaItemId: string;
 }
 
-export type GDate = {
+export type GPhotosDate = {
   year: string;
   month: string;
   day: string;
@@ -111,8 +111,8 @@ export enum MediasContentCategories {
 export interface MediaItemsFilter {
   dateFilter?: {
     ranges: {
-      startDate: GDate;
-      endDate: GDate;
+      startDate: GPhotosDate;
+      endDate: GPhotosDate;
     }[];
   };
   contentFilter?: {
