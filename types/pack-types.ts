@@ -21,5 +21,5 @@ export interface Album {
   shareInfo?: ShareInfo;
   mediaItems: MediaItem[];
   coverPhoto: string;
-  coverPhotoMediaItem: string | undefined;
+  coverPhotoMediaItem: string | undefined; // TODO: find a way to make this a MediaItem
 }
