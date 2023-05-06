@@ -12,9 +12,6 @@ export class MediaItems {
     return this.transport.get(`mediaItems/${id}`);
   }
 
-  batchGet(ids: string[]) {
-  }
-
   search(albumIdOrFilters: string | object, pageSize = 100, pageToken?: string) {
     const postData: {
       pageSize?: number;
@@ -29,9 +26,6 @@ export class MediaItems {
     }
     JSON.stringify(postData);
     return this.transport.post("mediaItems:search", postData);
-  }
-
-  batchCreate(mediaItems: MediaItem[]) {
   }
 
 }
