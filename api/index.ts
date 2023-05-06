@@ -1,5 +1,4 @@
 import * as coda from "@codahq/packs-sdk";
-// import { } from "types";
 import { Transport } from "./transport";
 import { Albums } from "./albums";
 
