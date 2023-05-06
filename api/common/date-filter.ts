@@ -1,6 +1,5 @@
 import { GDate } from "./gdate";
 import { DateRange } from "./date-range";
-import { MediaItemsFilter } from "types/api-types";
 
 export class DateFilter {
   public dates: ReturnType<typeof GDate.newDate>[] = [];
