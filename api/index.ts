@@ -2,8 +2,6 @@ import * as coda from "@codahq/packs-sdk";
 import { Transport } from "./transport";
 import { Albums } from "./albums";
 
-const ApiUrl = "https://photoslibrary.googleapis.com/v1";
-
 export default class GPhotos {
 
   public readonly transport: Transport;

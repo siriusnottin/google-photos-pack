@@ -1,5 +1,7 @@
 import * as coda from "@codahq/packs-sdk";
 
+const ApiBaseUrl = "https://photoslibrary.googleapis.com/v1";
+
 export class Transport {
 
   constructor(public readonly context: coda.ExecutionContext) { }
@@ -9,7 +11,7 @@ export class Transport {
   }
 
   private createUrl(endpoint: string, params?: { [key: string]: any }) {
-    let url = `${ApiUrl}/${endpoint}`;
+    let url = `${ApiBaseUrl}/${endpoint}`;
     if (params) {
       url = coda.withQueryParams(url, params);
     }
