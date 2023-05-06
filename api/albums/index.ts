@@ -29,10 +29,4 @@ export class Albums {
   update(albumId: string, title: string, description?: string) {
   }
 
-  batchAddMediaItems(albumId: string, mediaItemIds: string[]) {
-  }
-
-  batchRemoveMediaItems(albumId: string, mediaItemIds: string[]) {
-  }
-
 }
