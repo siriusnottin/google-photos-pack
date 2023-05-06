@@ -72,29 +72,10 @@ export interface AlbumResponse {
   coverPhotoMediaItemId: string;
 }
 
-// 
-// Pack types
-
-export interface MediaItem {
-  mediaId: string;
-  filename: string;
-  mediaType: string;
-  mimeType: string;
-  description: string;
-  creationTime: string;
-  width: number;
-  height: number;
-  image: string;
-  url: string;
-}
-
-export interface Album {
-  albumId: string;
-  title: string;
-  url: string;
-  mediaItems: MediaItem[];
-  coverPhoto: string;
-  coverPhotoMediaItem: string | undefined;
+export type GDate = {
+  year: string;
+  month: string;
+  day: string;
 }
 
 export enum MediasContentCategories {
@@ -126,25 +107,12 @@ export enum MediasContentCategories {
   Whiteboards = "WHITEBOARDS",
 }
 
-export enum MediaTypes {
-  Photo = "PHOTO",
-  Video = "VIDEO",
-}
-
 // filter object when "searching" for media items
 export interface MediaItemsFilter {
   dateFilter?: {
     ranges: {
-      startDate: {
-        year: string;
-        month: string;
-        day: string;
-      };
-      endDate: {
-        year: string;
-        month: string;
-        day: string;
-      };
+      startDate: GDate;
+      endDate: GDate;
     }[];
   };
   contentFilter?: {
@@ -161,9 +129,14 @@ export interface MediaItemsFilter {
   excludeNonAppCreatedData?: boolean;
 }
 
-export interface GetMediaItemsPayload {
-  albumId?: string;
-  pageSize?: number;
-  pageToken?: string;
-  filters?: MediaItemsFilter;
+export interface ApiResponse {
+  mediaItems?: MediaItemResponse[];
+  albums?: AlbumResponse[];
+  sharedAlbums?: object[];
+  nextPageToken?: string;
+}
+
+export enum MediaTypes {
+  Photo = "PHOTO",
+  Video = "VIDEO",
 }

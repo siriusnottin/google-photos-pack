@@ -1,7 +1,7 @@
 import * as coda from "@codahq/packs-sdk";
 import * as helpers from "./helpers";
 import * as schemas from "./schemas";
-import * as types from "./types";
+import * as types from "./types/pack-types";
 import * as params from "./params";
 
 export const pack = coda.newPack();
