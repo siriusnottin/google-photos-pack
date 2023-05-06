@@ -73,9 +73,9 @@ export interface AlbumResponse {
 }
 
 export type GPhotosDate = {
-  year: string;
-  month: string;
-  day: string;
+  year: number;
+  month: number;
+  day: number;
 }
 
 export enum MediasContentCategories {
