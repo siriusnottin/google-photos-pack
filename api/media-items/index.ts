@@ -1,6 +1,6 @@
 import { MediaItem } from "types/pack-types"
 import { Transport } from "api/transport";
-
+import { Filters } from "./filters";
 export class MediaItems {
   constructor(public transport: Transport) { }
 
@@ -12,7 +12,7 @@ export class MediaItems {
     return this.transport.get(`mediaItems/${mediaItemId}`);
   }
 
-  search(albumIdOrFilters: string | object, pageSize = 100, pageToken?: string) {
+  search(albumIdOrFilters: string | Filters, pageSize = 100, pageToken?: string) {
     const postData: {
       pageSize?: number;
       pageToken?: string;
