@@ -8,8 +8,8 @@ export class MediaItems {
     return this.transport.get("mediaItems", { pageSize, pageToken });
   }
 
-  get(id: string) {
-    return this.transport.get(`mediaItems/${id}`);
+  get(mediaItemId: string) {
+    return this.transport.get(`mediaItems/${mediaItemId}`);
   }
 
   search(albumIdOrFilters: string | object, pageSize = 100, pageToken?: string) {
