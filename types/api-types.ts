@@ -52,7 +52,7 @@ interface SharedAlbumOptions {
   isCommentable: boolean;
 }
 
-interface ShareInfo {
+export interface ShareInfo {
   sharedAlbumOptions: SharedAlbumOptions;
   shareableUrl?: string;
   shareToken: string;

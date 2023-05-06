@@ -1,3 +1,4 @@
+import { ShareInfo } from "./api-types";
 // Pack types
 
 export interface MediaItem {
@@ -17,6 +18,7 @@ export interface Album {
   albumId: string;
   title: string;
   url: string;
+  shareInfo?: ShareInfo;
   mediaItems: MediaItem[];
   coverPhoto: string;
   coverPhotoMediaItem: string | undefined;
