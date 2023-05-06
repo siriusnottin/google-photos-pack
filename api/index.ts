@@ -8,7 +8,7 @@ export default class GPhotos {
   public readonly albums: Albums;
   public readonly mediaItems: MediaItems;
 
-  constructor(private readonly context: coda.ExecutionContext) {
+  constructor(public readonly context: coda.ExecutionContext) {
     this.transport = new Transport(context);
     this.albums = new Albums(this.transport);
     this.mediaItems = new MediaItems(this.transport);
