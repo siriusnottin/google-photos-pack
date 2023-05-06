@@ -73,9 +73,9 @@ export interface AlbumResponse {
 }
 
 export type GPhotosDate = {
-  year: number;
-  month: number;
-  day: number;
+  year?: number;
+  month?: number;
+  day?: number;
 }
 
 export enum MediasContentCategories {
@@ -110,6 +110,7 @@ export enum MediasContentCategories {
 // filter object when "searching" for media items
 export interface MediaItemsFilter {
   dateFilter?: {
+    dates: GPhotosDate[];
     ranges: {
       startDate: GPhotosDate;
       endDate: GPhotosDate;
