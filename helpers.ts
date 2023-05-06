@@ -17,7 +17,7 @@ export async function getConnectionName(context: coda.ExecutionContext) {
 
 // Parse the response from the API to the format we want to return
 // Matches the MediaSchema schema defined in ./schemas.ts
-function mediaItemsParser(mediaItems: types.MediaItemResponse[]): types.MediaItem[] {
+export function mediaItemsParser(mediaItems: types.MediaItemResponse[]): types.MediaItem[] {
   return mediaItems.map((mediaItem) => {
     let { id, filename, mimeType, description, productUrl } = mediaItem;
     let { creationTime, photo, video, width, height } = mediaItem.mediaMetadata;
