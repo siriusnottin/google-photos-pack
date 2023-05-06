@@ -120,7 +120,7 @@ export interface MediaItemsFilter {
     excludedContentCategories: string[],
   };
   mediaTypeFilter?: {
-    mediaTypes: [string]
+    mediaTypes: MediaTypes[],
   }
   featureFilter?: {
     includedFeatures: ["NONE" | "FAVORITES"],
@@ -137,6 +137,7 @@ export interface ApiResponse {
 }
 
 export enum MediaTypes {
+  All = "ALL_MEDIA",
   Photo = "PHOTO",
   Video = "VIDEO",
 }
