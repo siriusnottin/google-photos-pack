@@ -1,7 +1,7 @@
 import * as coda from "@codahq/packs-sdk";
 import * as helpers from "./helpers";
 import * as schemas from "./schemas";
-import * as types from "./types/pack-types";
+import * as types from "./types/api-types";
 import * as params from "./params";
 import GPhotos from "./api";
 
@@ -40,52 +40,38 @@ pack.addSyncTable({
       params.MediaArchivedOptional,
     ],
     execute: async function ([dateRange, categoriesToInclude, categoriesToExclude, mediaType, favorite, archived], context) {
-      function formatDate(date: Date, dateFormatter: Intl.DateTimeFormat) {
-        const dateParts = dateFormatter.formatToParts(date);
-        return {
-          year: dateParts.find((part) => part.type === "year").value,
-          month: dateParts.find((part) => part.type === "month").value,
-          day: dateParts.find((part) => part.type === "day").value,
-        };
+      let photos = new GPhotos(context);
+
+      // Date filter
+      const filters = new photos.Filters(archived);
+      const dateFilter = new photos.DateFilter();
+      if (!dateRange) {
+        throw new coda.UserVisibleError("Date range is required.");
       }
-      const dateFormatter = new Intl.DateTimeFormat("en", {
-        timeZone: context.timezone, // Use the doc's timezone (important!)
-        year: "numeric",
-        month: "numeric",
-        day: "numeric",
-      });
+      dateFilter.addRange(dateRange[0], dateRange[1]);
+      filters.setDateFilter(dateFilter);
 
-      let filters: types.MediaItemsFilter = {
-        dateFilter: {
-          ranges: [{
-            "startDate": formatDate(dateRange[0], dateFormatter),
-            "endDate": formatDate(dateRange[1], dateFormatter),
-          }]
-        },
-      };
-
-      if (categoriesToInclude || categoriesToExclude) {
-        filters.contentFilter = {
-          includedContentCategories: (categoriesToInclude) ? categoriesToInclude.map((category) => types.MediasContentCategories[category]) : undefined,
-          excludedContentCategories: (categoriesToExclude) ? categoriesToExclude.map((category) => types.MediasContentCategories[category]) : undefined,
-        };
+      // Content filter
+      const contentFilter = new photos.ContentFilter();
+      switch (categoriesToInclude || categoriesToExclude) {
+        case categoriesToInclude:
+          categoriesToInclude?.forEach((category) => {
+            contentFilter.addIncludedCategory(category as types.MediasContentCategories);
+          });
+          break;
+        case categoriesToExclude:
+          categoriesToExclude?.forEach((category) => {
+            contentFilter.addExcludedCategory(category as types.MediasContentCategories);
+          });
+          break;
       }
+      filters.setContentFilter(contentFilter);
 
-      if (mediaType) {
-        filters.mediaTypeFilter = { mediaTypes: [types.MediaTypes[mediaType]] };
-      }
+      // Media type filter
+      const mediaTypeFilter = new photos.MediaTypeFilter(mediaType as types.MediaTypes);
+      filters.setMediaTypeFilter(mediaTypeFilter);
 
-      if (favorite) {
-        filters.featureFilter = { includedFeatures: ["FAVORITES"] }
-      }
-
-      if (archived) { filters.includeArchivedMedia = archived }
-
-      if (!filters) {
-        throw new coda.UserVisibleError("You must provide a filter to sync media items");
-      }
-
-      const { nextPageToken, mediaItems }: { nextPageToken?: string, mediaItems?: types.MediaItemResponse[] } = (await new GPhotos(context).mediaItems.search(filters, 100, (context.sync.continuation?.nextPageToken as string | undefined)))?.body ?? {};
+      const { nextPageToken, mediaItems }: { nextPageToken?: string, mediaItems?: types.MediaItemResponse[] } = (await photos.mediaItems.search(filters, 100, (context.sync.continuation?.nextPageToken as string | undefined)))?.body ?? {};
 
       return {
         result: mediaItems ? helpers.mediaItemsParser(mediaItems) : null,
