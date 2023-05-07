@@ -17,12 +17,12 @@ export class MediaItems {
       pageSize?: number;
       pageToken?: string;
       albumId?: string;
-      filters?: object;
+      filters?: ReturnType<Filters["toJSON"]>;
     } = { pageSize, pageToken }
     if (typeof albumIdOrFilters === "string") {
       postData.albumId = albumIdOrFilters;
     } else {
-      postData.filters = albumIdOrFilters;
+      postData.filters = albumIdOrFilters.toJSON();
     }
     JSON.stringify(postData);
     return this.transport.post("mediaItems:search", postData);
