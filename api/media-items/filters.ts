@@ -8,7 +8,7 @@ export class Filters {
   public mediaTypeFilter: MediaTypeFilter;
   public contentFilter: ContentFilter;
 
-  constructor(public includeArchiveMedia = false) { }
+  constructor(public includeArchivedMedia = false) { }
 
   setDateFilter(dateFilter: DateFilter) {
     this.dateFilter = dateFilter;
@@ -22,8 +22,8 @@ export class Filters {
     this.contentFilter = contentFilter;
   }
 
-  setIncludeArchiveMedia(includeArchiveMedia: boolean) {
-    this.includeArchiveMedia = includeArchiveMedia;
+  setIncludeArchivedMedia(includeArchivedMedia: boolean) {
+    this.includeArchivedMedia = includeArchivedMedia;
   }
 
   toJSON(): MediaItemsFilter {
@@ -31,7 +31,7 @@ export class Filters {
       dateFilter: this.dateFilter,
       mediaTypeFilter: this.mediaTypeFilter,
       contentFilter: this.contentFilter,
-      includeArchiveMedia: this.includeArchiveMedia,
+      includeArchivedMedia: this.includeArchivedMedia,
     }
   }
 }
