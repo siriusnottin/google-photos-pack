@@ -12,7 +12,7 @@ export class MediaItems {
     return this.transport.get(`mediaItems/${mediaItemId}`);
   }
 
-  search(albumIdOrFilters: string | Filters, pageSize = 100, pageToken?: string) {
+  search(albumIdOrFilters: string | Filters, fields?: string, pageSize = 100, pageToken?: string) {
     const postData: {
       pageSize?: number;
       pageToken?: string;
@@ -25,7 +25,7 @@ export class MediaItems {
       postData.filters = albumIdOrFilters.toJSON();
     }
     JSON.stringify(postData);
-    return this.transport.post("mediaItems:search", postData);
+    return this.transport.post("mediaItems:search", postData, fields);
   }
 
 }

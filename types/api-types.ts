@@ -36,8 +36,10 @@ interface ContributorInfo {
   displayName: string;
 }
 
-export interface MediaItemResponse {
-  id: string;
+export interface MediaItemIdRes {
+  id: string,
+};
+export interface MediaItemResponse extends MediaItemIdRes {
   description: string;
   productUrl: string;
   baseUrl: string;
@@ -131,7 +133,7 @@ export interface MediaItemsFilter {
 }
 
 export interface ApiResponse {
-  mediaItems?: MediaItemResponse[];
+  mediaItems?: MediaItemResponse[] | MediaItemIdRes[];
   albums?: AlbumResponse[];
   sharedAlbums?: object[];
   nextPageToken?: string;

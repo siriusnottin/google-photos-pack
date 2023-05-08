@@ -74,7 +74,7 @@ export const AlbumSchema = coda.makeObjectSchema({
       description: "Google Photos URL for the album.",
       codaType: coda.ValueHintType.Url,
     },
-    mediasItems: {
+    mediaItems: {
       type: coda.ValueType.Array,
       items: MediaReferenceSchema
     },

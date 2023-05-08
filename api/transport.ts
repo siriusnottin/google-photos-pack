@@ -1,4 +1,5 @@
 import * as coda from "@codahq/packs-sdk";
+import { ApiResponse } from "types/api-types";
 
 const ApiBaseUrl = "https://photoslibrary.googleapis.com/v1";
 
@@ -21,14 +22,14 @@ export class Transport {
   private createRequestParams(method: coda.FetchMethodType, url: string, body?: string): coda.FetchRequest {
     // middleware to add header
     return {
-      method: method,
-      url: url,
+      method,
+      url,
       headers: this.headers,
-      body: body,
+      body,
     };
   }
 
-  get(endpoint: string, params?: { [key: string]: any }) {
+  get(endpoint: string, params?: { [key: string]: any }): Promise<coda.FetchResponse<ApiResponse>> {
     const request = this.createRequestParams(
       "GET",
       this.createUrl(endpoint, params)
@@ -40,11 +41,12 @@ export class Transport {
     // TODO: implement upload method
   }
 
-  post(endpoint: string, options?: object) {
+  post(endpoint: string, options?: object, fields?: string): Promise<coda.FetchResponse<ApiResponse>> {
     const body = JSON.stringify(options) as string;
+    const params = { fields: fields }
     const request = this.createRequestParams(
       "POST",
-      this.createUrl(endpoint),
+      this.createUrl(endpoint, params),
       body
     );
     return this.context.fetcher.fetch(request);

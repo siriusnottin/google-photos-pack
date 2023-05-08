@@ -71,10 +71,10 @@ pack.addSyncTable({
       const mediaTypeFilter = new photos.MediaTypeFilter(mediaType as types.MediaTypes);
       filters.setMediaTypeFilter(mediaTypeFilter);
 
-      const { nextPageToken, mediaItems }: { nextPageToken?: string, mediaItems?: types.MediaItemResponse[] } = (await photos.mediaItems.search(filters, 100, (context.sync.continuation?.nextPageToken as string | undefined)))?.body ?? {};
+      const { nextPageToken, mediaItems } = (await photos.mediaItems.search(filters, '', 100, (context.sync.continuation?.nextPageToken as string | undefined)))?.body ?? {};
 
       return {
-        result: mediaItems ? helpers.mediaItemsParser(mediaItems) : null,
+        result: mediaItems ? helpers.mediaItemsParser(mediaItems as types.MediaItemResponse[]) : null,
         continuation: { nextPageToken }
       }
     },
@@ -90,7 +90,41 @@ pack.addSyncTable({
     description: "Sync all albums.",
     parameters: [],
     execute: async function ([], context) {
-      return helpers.syncAlbums(context);
+
+      const photos = new GPhotos(context);
+      let response
+      try {
+        response = await photos.albums.list(20, (context.sync.continuation?.nextAlbumsPageToken as string | undefined));
+      } catch (e) {
+        if (coda.StatusCodeError.isStatusCodeError(e)) {
+          let statusError = e as coda.StatusCodeError;
+          let message = statusError.body?.error?.message;
+          if (message) {
+            throw new coda.UserVisibleError(message);
+          }
+        }
+        throw e;
+      }
+      const { albums, nextPageToken } = response.body;
+
+      let parsedAlbums = helpers.albumParser(albums)
+
+      const continuation = {
+        nextAlbumsPageToken: nextPageToken,
+      }
+
+      parsedAlbums = await Promise.all(parsedAlbums.map(async (album) => {
+        const { albumId } = album;
+        const { mediaItems } = await helpers.getMediaItemsFromAlbum(albumId, context);
+        album.mediaItems = mediaItems;
+        console.debug(album.mediaItems.length, 'medias in album', album.title)
+        return album;
+      }));
+
+      return {
+        result: parsedAlbums,
+        continuation
+      }
     }
   }
 });
