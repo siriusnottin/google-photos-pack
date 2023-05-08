@@ -42,12 +42,13 @@ pack.addSyncTable({
     execute: async function ([dateRange, categoriesToInclude, categoriesToExclude, mediaType, favorite, archived], context) {
       let photos = new GPhotos(context);
 
-      // Date filter
       const filters = new photos.Filters(archived);
-      const dateFilter = new photos.DateFilter();
+
+      // Date filter
       if (!dateRange) {
         throw new coda.UserVisibleError("Date range is required.");
       }
+      const dateFilter = new photos.DateFilter();
       dateFilter.addRange(dateRange[0], dateRange[1]);
       filters.setDateFilter(dateFilter);
 
@@ -71,7 +72,13 @@ pack.addSyncTable({
       const mediaTypeFilter = new photos.MediaTypeFilter(mediaType as types.MediaTypes);
       filters.setMediaTypeFilter(mediaTypeFilter);
 
-      const { nextPageToken, mediaItems } = (await photos.mediaItems.search(filters, '', 100, (context.sync.continuation?.nextPageToken as string | undefined)))?.body ?? {};
+      const response = await photos.mediaItems.search(
+        filters,
+        '',
+        100,
+        (context.sync.continuation?.nextPageToken as string | undefined)
+      )
+      const { nextPageToken, mediaItems } = response?.body ?? {};
 
       return {
         result: mediaItems ? helpers.mediaItemsParser(mediaItems as types.MediaItemResponse[]) : null,
@@ -94,7 +101,7 @@ pack.addSyncTable({
       const photos = new GPhotos(context);
       let response
       try {
-        response = await photos.albums.list(20, (context.sync.continuation?.nextAlbumsPageToken as string | undefined));
+        response = await photos.albums.list(20, (context.sync.continuation?.nextPageToken as string | undefined));
       } catch (e) {
         if (coda.StatusCodeError.isStatusCodeError(e)) {
           let statusError = e as coda.StatusCodeError;
@@ -105,13 +112,9 @@ pack.addSyncTable({
         }
         throw e;
       }
-      const { albums, nextPageToken } = response.body;
+      const { albums, nextPageToken } = response?.body;
 
       let parsedAlbums = helpers.albumParser(albums)
-
-      const continuation = {
-        nextAlbumsPageToken: nextPageToken,
-      }
 
       parsedAlbums = await Promise.all(parsedAlbums.map(async (album) => {
         const { albumId } = album;
@@ -122,7 +125,7 @@ pack.addSyncTable({
 
       return {
         result: parsedAlbums,
-        continuation
+        continuation: nextPageToken
       }
     }
   }
