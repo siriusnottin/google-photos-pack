@@ -51,7 +51,6 @@ export async function getMediaItemsFromAlbum(albumId: string, context: coda.Exec
     }
     nextPageToken = response.body?.nextPageToken as string | undefined;
   } while (nextPageToken);
-  // console.debug('found', mediaItems.length, 'medias in album', albumId)
   return { mediaItems };
 }
 

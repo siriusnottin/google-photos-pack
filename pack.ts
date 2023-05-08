@@ -117,7 +117,6 @@ pack.addSyncTable({
         const { albumId } = album;
         const { mediaItems } = await helpers.getMediaItemsFromAlbum(albumId, context);
         album.mediaItems = mediaItems;
-        console.debug(album.mediaItems.length, 'medias in album', album.title)
         return album;
       }));
 
