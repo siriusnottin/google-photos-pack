@@ -29,12 +29,27 @@ export class Transport {
     };
   }
 
+  private async withErrorHandling<T>(apiCall: () => Promise<T>): Promise<T> {
+    try {
+      return await apiCall();
+    } catch (e) {
+      if (coda.StatusCodeError.isStatusCodeError(e)) {
+        let statusError = e as coda.StatusCodeError;
+        let message = statusError.body?.error?.message;
+        if (message) {
+          throw new coda.UserVisibleError(message);
+        }
+      }
+      throw e;
+    }
+  }
+
   get(endpoint: string, params?: { [key: string]: any }): Promise<coda.FetchResponse<ApiResponse>> {
     const request = this.createRequestParams(
       "GET",
       this.createUrl(endpoint, params)
     );
-    return this.context.fetcher.fetch(request);
+    return this.withErrorHandling(() => this.context.fetcher.fetch(request));
   }
 
   upload() {
@@ -42,14 +57,14 @@ export class Transport {
   }
 
   post(endpoint: string, options?: object, fields?: string): Promise<coda.FetchResponse<ApiResponse>> {
-    const body = JSON.stringify(options) as string;
+    const body = JSON.stringify(options);
     const params = { fields: fields }
     const request = this.createRequestParams(
       "POST",
       this.createUrl(endpoint, params),
       body
     );
-    return this.context.fetcher.fetch(request);
+    return this.withErrorHandling(() => this.context.fetcher.fetch(request));
   }
 
 }

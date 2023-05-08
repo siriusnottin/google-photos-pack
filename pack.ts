@@ -99,19 +99,7 @@ pack.addSyncTable({
     execute: async function ([], context) {
 
       const photos = new GPhotos(context);
-      let response
-      try {
-        response = await photos.albums.list(20, (context.sync.continuation?.nextPageToken as string | undefined));
-      } catch (e) {
-        if (coda.StatusCodeError.isStatusCodeError(e)) {
-          let statusError = e as coda.StatusCodeError;
-          let message = statusError.body?.error?.message;
-          if (message) {
-            throw new coda.UserVisibleError(message);
-          }
-        }
-        throw e;
-      }
+      const response = await photos.albums.list(20, (context.sync.continuation?.nextPageToken as string | undefined));
       const { albums, nextPageToken } = response?.body;
 
       let parsedAlbums = helpers.albumParser(albums)
