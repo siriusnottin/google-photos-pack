@@ -109,6 +109,11 @@ export enum MediasContentCategories {
   Whiteboards = "WHITEBOARDS",
 }
 
+export enum MediaFeature {
+  None = "NONE",
+  Favorites = "FAVORITES",
+}
+
 // filter object when "searching" for media items
 export interface MediaItemsFilter {
   dateFilter?: {
@@ -126,7 +131,7 @@ export interface MediaItemsFilter {
     mediaTypes: MediaTypes[],
   }
   featureFilter?: {
-    includedFeatures: ["NONE" | "FAVORITES"],
+    includedFeatures: [MediaFeature],
   };
   includeArchivedMedia?: boolean;
   excludeNonAppCreatedData?: boolean;

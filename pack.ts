@@ -73,6 +73,12 @@ pack.addSyncTable({
       // mediaTypeFilter.setType(mediaType as types.MediaTypes)
       filters.setMediaTypeFilter(mediaTypeFilter);
 
+      // Feature filter (favorites)
+      if (favorite) {
+        const featureFilter = new photos.FeatureFilter(types.MediaFeature.Favorites)
+        filters.setFeatureFilter(featureFilter);
+      }
+
       const response = await photos.mediaItems.search(
         filters,
         '',

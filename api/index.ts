@@ -7,6 +7,7 @@ import { MediaItems } from "./media-items";
 
 import { DateFilter } from "./common/date-filter";
 import { MediaTypeFilter } from "./media-items/media-type-filter";
+import { FeatureFilter } from "./media-items/feature-filter"
 import { ContentFilter } from "./media-items/content-filter";
 import { Filters } from "./media-items/filters";
 export default class GPhotos {
@@ -18,6 +19,7 @@ export default class GPhotos {
 
   public readonly DateFilter = DateFilter;
   public readonly MediaTypeFilter = MediaTypeFilter;
+  public readonly FeatureFilter = FeatureFilter;
   public readonly ContentFilter = ContentFilter;
   public readonly Filters = Filters;
 
