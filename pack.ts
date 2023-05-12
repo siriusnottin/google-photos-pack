@@ -89,7 +89,7 @@ pack.addSyncTable({
 
       return {
         result: mediaItems ? helpers.mediaItemsParser(mediaItems as types.MediaItemResponse[]) : null,
-        continuation: { nextPageToken }
+        continuation: nextPageToken ? { nextPageToken } : undefined
       }
     },
   },
@@ -120,7 +120,7 @@ pack.addSyncTable({
 
       return {
         result: parsedAlbums,
-        continuation: { nextPageToken }
+        continuation: nextPageToken ? { nextPageToken } : undefined
       }
     }
   }
