@@ -58,7 +58,7 @@ export class Transport {
 
   post(endpoint: string, options?: object, fields?: string): Promise<coda.FetchResponse<ApiResponse>> {
     const body = JSON.stringify(options);
-    const params = { fields: fields }
+    const params = { fields }
     const request = this.createRequestParams(
       "POST",
       this.createUrl(endpoint, params),
