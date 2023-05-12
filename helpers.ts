@@ -45,9 +45,9 @@ export async function getMediaItemsFromAlbum(albumId: string, context: coda.Exec
     const response = await photos.mediaItems.search(albumId, 'mediaItems(id),nextPageToken', pageSize, nextPageToken)
     const mediaItemsRes = response.body?.mediaItems as types.MediaItemIdRes[];
     if (mediaItemsRes) {
-      mediaItems = mediaItems.concat(mediaItemsRes.map((mediaItem) => {
+      mediaItems = mediaItemsRes.map((mediaItem) => {
         return { mediaId: mediaItem.id, filename: "Not found" }
-      }));
+      });
     }
     nextPageToken = response.body?.nextPageToken as string | undefined;
   } while (nextPageToken);
