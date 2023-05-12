@@ -37,7 +37,7 @@ export function mediaItemsParser(mediaItems: types.MediaItemResponse[]): types.M
   });
 }
 
-export async function getMediaItemsFromAlbum(albumId: string, context: coda.ExecutionContext, pageSize = 25) {
+export async function getMediaItemsFromAlbum(albumId: string, context: coda.ExecutionContext, pageSize = 100) {
   const photos = new GPhotos(context);
   let mediaItems: types.Album['mediaItems'] = [];
   let nextPageToken: string | undefined;
