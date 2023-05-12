@@ -108,19 +108,19 @@ pack.addSyncTable({
       const photos = new GPhotos(context);
       const response = await photos.albums.list(20, (context.sync.continuation?.nextPageToken as string | undefined));
       const { albums, nextPageToken } = response?.body;
+      const parsedAlbums = albums ? helpers.albumParser(albums) : null;
 
-      let parsedAlbums = helpers.albumParser(albums)
-
-      parsedAlbums = await Promise.all(parsedAlbums.map(async (album) => {
-        const { albumId } = album;
-        const { mediaItems } = await helpers.getMediaItemsFromAlbum(albumId, context);
-        album.mediaItems = mediaItems;
-        return album;
-      }));
+      if (parsedAlbums) {
+        for (const album of parsedAlbums) {
+          const { albumId } = album;
+          const { mediaItems } = await helpers.getMediaItemsFromAlbum(albumId, context);
+          album.mediaItems = mediaItems ?? undefined;
+        }
+      }
 
       return {
         result: parsedAlbums,
-        continuation: nextPageToken
+        continuation: { nextPageToken }
       }
     }
   }
