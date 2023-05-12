@@ -29,11 +29,8 @@ const MediaMetadataSchema = coda.makeObjectSchema({
 
 export const MediaSchema = coda.makeObjectSchema({
   properties: {
-    mediaId: {
-      type: coda.ValueType.String,
-      required: true
-    },
-    filename: { type: coda.ValueType.String, required: true },
+    mediaId: { type: coda.ValueType.String },
+    filename: { type: coda.ValueType.String },
     mediaType: { type: coda.ValueType.String },
     mimeType: { type: coda.ValueType.String },
     description: { type: coda.ValueType.String },
@@ -61,7 +58,18 @@ export const MediaSchema = coda.makeObjectSchema({
   ],
 });
 
-const MediaReferenceSchema = coda.makeReferenceSchemaFromObjectSchema(MediaSchema, "Media");
+const MediaReferenceSchema = coda.makeObjectSchema({
+  codaType: coda.ValueHintType.Reference,
+  properties: {
+    filename: { type: coda.ValueType.String, required: true },
+    mediaId: { type: coda.ValueType.String, required: true },
+  },
+  displayProperty: "filename",
+  idProperty: "mediaId",
+  identity: {
+    name: "Media",
+  },
+});
 
 export const AlbumSchema = coda.makeObjectSchema({
   properties: {
