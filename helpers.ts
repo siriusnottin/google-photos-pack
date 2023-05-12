@@ -59,16 +59,20 @@ export async function getMediaItemsFromAlbum(albumId: string, context: coda.Exec
 export function albumParser(albums: types.AlbumResponse[]): types.Album[] {
   return albums.map((album) => {
     let { id, title, productUrl, coverPhotoBaseUrl, coverPhotoMediaItemId } = album;
+    let coverPhotoMediaItem: types.Album['coverPhotoMediaItem'] = undefined;
+    if (coverPhotoMediaItemId) {
+      coverPhotoMediaItem = {
+        filename: "Not found",
+        mediaId: coverPhotoMediaItemId,
+      }
+    }
     return {
       albumId: id,
       title,
       url: productUrl,
       mediaItems: [],
       coverPhoto: `${coverPhotoBaseUrl}=w2048-h1024`,
-      coverPhotoMediaItem: {
-        filename: "Not found",
-        mediaId: coverPhotoMediaItemId,
-      },
+      coverPhotoMediaItem,
     }
   });
 }

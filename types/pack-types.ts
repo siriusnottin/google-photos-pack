@@ -26,7 +26,7 @@ export interface Album {
   title: string;
   url: string;
   shareInfo?: ShareInfo;
-  mediaItems: MediaItemReference[];
+  mediaItems: MediaItemReference[] | undefined;
   coverPhoto: string;
-  coverPhotoMediaItem: MediaItemReference;
+  coverPhotoMediaItem: MediaItemReference | undefined;
 }
