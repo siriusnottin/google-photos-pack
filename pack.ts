@@ -70,6 +70,7 @@ pack.addSyncTable({
 
       // Media type filter
       const mediaTypeFilter = new photos.MediaTypeFilter(mediaType as types.MediaTypes);
+      // mediaTypeFilter.setType(mediaType as types.MediaTypes)
       filters.setMediaTypeFilter(mediaTypeFilter);
 
       const response = await photos.mediaItems.search(
