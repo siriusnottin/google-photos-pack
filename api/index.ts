@@ -23,8 +23,8 @@ export default class GPhotos {
   public readonly ContentFilter = ContentFilter;
   public readonly Filters = Filters;
 
-  constructor(public readonly context: coda.ExecutionContext) {
-    this.transport = new Transport(context);
+  constructor(public readonly fetcher: coda.Fetcher) {
+    this.transport = new Transport(fetcher);
     this.albums = new Albums(this.transport);
     this.mediaItems = new MediaItems(this.transport);
   }

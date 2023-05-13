@@ -40,7 +40,7 @@ pack.addSyncTable({
       params.MediaArchivedOptional,
     ],
     execute: async function ([dateRange, categoriesToInclude, categoriesToExclude, mediaType, favorite, archived], context) {
-      let photos = new GPhotos(context);
+      let photos = new GPhotos(context.fetcher);
 
       const filters = new photos.Filters(archived);
 
@@ -105,7 +105,7 @@ pack.addSyncTable({
     parameters: [],
     execute: async function ([], context) {
 
-      const photos = new GPhotos(context);
+      const photos = new GPhotos(context.fetcher);
       const response = await photos.albums.list(20, (context.sync.continuation?.nextPageToken as string | undefined));
       const { albums, nextPageToken } = response?.body;
       const parsedAlbums = albums ? helpers.albumParser(albums) : null;

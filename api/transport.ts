@@ -5,7 +5,7 @@ const ApiBaseUrl = "https://photoslibrary.googleapis.com/v1";
 
 export class Transport {
 
-  constructor(public readonly context: coda.ExecutionContext) { }
+  constructor(public readonly fetcher: coda.Fetcher) { }
 
   private readonly headers = {
     "Content-Type": "application/json",
@@ -49,7 +49,7 @@ export class Transport {
       "GET",
       this.createUrl(endpoint, params)
     );
-    return this.withErrorHandling(() => this.context.fetcher.fetch(request));
+    return this.withErrorHandling(() => this.fetcher.fetch(request));
   }
 
   upload() {
@@ -64,7 +64,7 @@ export class Transport {
       this.createUrl(endpoint, params),
       body
     );
-    return this.withErrorHandling(() => this.context.fetcher.fetch(request));
+    return this.withErrorHandling(() => this.fetcher.fetch(request));
   }
 
 }
