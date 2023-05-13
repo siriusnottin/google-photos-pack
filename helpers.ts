@@ -37,12 +37,12 @@ export function mediaItemsParser(mediaItems: types.MediaItemResponse[]): types.M
   });
 }
 
-export async function getMediaItemsFromAlbum(albumId: string, context: coda.ExecutionContext, pageSize = 100) {
+export async function getMediaItemsFromAlbum(albumId: string, context: coda.ExecutionContext) {
   const photos = new GPhotos(context.fetcher);
   let mediaItems: types.Album['mediaItems'] = [];
   let nextPageToken: string | undefined;
   do {
-    const response = await photos.mediaItems.search(albumId, 'mediaItems(id),nextPageToken', pageSize, nextPageToken)
+    const response = await photos.mediaItems.search(albumId, nextPageToken, 100, 'mediaItems(id),nextPageToken')
     const mediaItemsRes = response.body?.mediaItems as types.MediaItemIdRes[];
     if (mediaItemsRes) {
       mediaItems = mediaItems.concat(mediaItemsRes.map((mediaItem) => {

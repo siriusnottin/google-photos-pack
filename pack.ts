@@ -79,12 +79,7 @@ pack.addSyncTable({
         filters.setFeatureFilter(featureFilter);
       }
 
-      const response = await photos.mediaItems.search(
-        filters,
-        '',
-        100,
-        (context.sync.continuation?.nextPageToken as string | undefined)
-      )
+      const response = await photos.mediaItems.search(filters, (context.sync.continuation?.nextPageToken as string | undefined))
       const { nextPageToken, mediaItems } = response?.body ?? {};
 
       return {

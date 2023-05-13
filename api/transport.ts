@@ -56,13 +56,12 @@ export class Transport {
     // TODO: implement upload method
   }
 
-  post(endpoint: string, options?: object, fields?: string): Promise<coda.FetchResponse<ApiResponse>> {
-    const body = JSON.stringify(options);
-    const params = { fields }
+  post(endpoint: string, params?: { [key: string]: any }, body?: any): Promise<coda.FetchResponse<ApiResponse>> {
+
     const request = this.createRequestParams(
       "POST",
       this.createUrl(endpoint, params),
-      body
+      JSON.stringify(body)
     );
     return this.withErrorHandling(() => this.fetcher.fetch(request));
   }
