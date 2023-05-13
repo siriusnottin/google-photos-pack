@@ -11,10 +11,9 @@ Use this pack to synchronise your photos and albums right inside Coda!
   - [x] Filter photos by favorites
   - [x] Filter photos by date
   - [x] Filter photos by categories (include)
-  - [x] Filter photos by categories (exclude) (soon)
-- [ ] See which photos belong to what album (soon) [#5](https://github.com/siriusnottin/google-photos-pack/issues/5)
+  - [x] Filter photos by categories (exclude)
+- [x] See which photos belong to what album (soon) [#5](https://github.com/siriusnottin/google-photos-pack/issues/5)
 - [ ] Get details informations about an album or a photo (soon) [#6](https://github.com/siriusnottin/google-photos-pack/issues/6)
-- [ ] Refactor the code for better readability and organization (I’m still learning)
 
 ## Changelog
 

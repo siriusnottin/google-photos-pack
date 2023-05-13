@@ -1,10 +1,11 @@
 import * as coda from "@codahq/packs-sdk";
+import { ApiResponse } from "types/api-types";
 
 const ApiBaseUrl = "https://photoslibrary.googleapis.com/v1";
 
 export class Transport {
 
-  constructor(public readonly context: coda.ExecutionContext) { }
+  constructor(public readonly fetcher: coda.Fetcher) { }
 
   private readonly headers = {
     "Content-Type": "application/json",
@@ -21,33 +22,48 @@ export class Transport {
   private createRequestParams(method: coda.FetchMethodType, url: string, body?: string): coda.FetchRequest {
     // middleware to add header
     return {
-      method: method,
-      url: url,
+      method,
+      url,
       headers: this.headers,
-      body: body,
+      body,
     };
   }
 
-  get(endpoint: string, params?: { [key: string]: any }) {
+  private async withErrorHandling<T>(apiCall: () => Promise<T>): Promise<T> {
+    try {
+      return await apiCall();
+    } catch (e) {
+      if (coda.StatusCodeError.isStatusCodeError(e)) {
+        let statusError = e as coda.StatusCodeError;
+        let message = statusError.body?.error?.message;
+        if (message) {
+          throw new coda.UserVisibleError(message);
+        }
+      }
+      throw e;
+    }
+  }
+
+  get(endpoint: string, params?: { [key: string]: any }): Promise<coda.FetchResponse<ApiResponse>> {
     const request = this.createRequestParams(
       "GET",
       this.createUrl(endpoint, params)
     );
-    return this.context.fetcher.fetch(request);
+    return this.withErrorHandling(() => this.fetcher.fetch(request));
   }
 
   upload() {
     // TODO: implement upload method
   }
 
-  post(endpoint: string, options?: object) {
-    const body = JSON.stringify(options) as string;
+  post(endpoint: string, params?: { [key: string]: any }, body?: any): Promise<coda.FetchResponse<ApiResponse>> {
+
     const request = this.createRequestParams(
       "POST",
-      this.createUrl(endpoint),
-      body
+      this.createUrl(endpoint, params),
+      JSON.stringify(body)
     );
-    return this.context.fetcher.fetch(request);
+    return this.withErrorHandling(() => this.fetcher.fetch(request));
   }
 
 }

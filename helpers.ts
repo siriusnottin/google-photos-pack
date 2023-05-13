@@ -1,5 +1,5 @@
 import * as coda from "@codahq/packs-sdk";
-import * as types from "types/pack-types";
+import * as types from "types/common-types";
 import GPhotos from "./api";
 
 export async function getConnectionName(context: coda.ExecutionContext) {
@@ -37,82 +37,42 @@ export function mediaItemsParser(mediaItems: types.MediaItemResponse[]): types.M
   });
 }
 
-async function getMediaItems(
-  context: coda.ExecutionContext,
-  albumId: string,
-  continuation?: coda.Continuation | undefined,
-): Promise<any> {
-  let body: types.GetMediaItemsPayload = {
-    albumId,
-    pageSize: 100,
-  }
-  if (continuation) {
-    body.pageToken = continuation.nextMediaItemsPageToken as string;
-  }
-  let response = await context.fetcher.fetch({
-    method: "POST",
-    url: `${ApiUrl}/mediaItems:search`,
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
-  });
-  let nextMediaItemsPageToken;
-  if (response.body.nextPageToken) {
-    nextMediaItemsPageToken = response.body.nextPageToken;
-  }
-  return {
-    result: response.body?.mediaItems ? mediaItemsParser(response.body.mediaItems) : undefined,
-    continuation: nextMediaItemsPageToken ? { nextMediaItemsPageToken } : undefined,
-  };
+export async function getMediaItemsFromAlbum(albumId: string, context: coda.ExecutionContext) {
+  const photos = new GPhotos(context.fetcher);
+  let mediaItems: types.Album['mediaItems'] = [];
+  let nextPageToken: string | undefined;
+  do {
+    const response = await photos.mediaItems.search(albumId, nextPageToken, 100, 'mediaItems(id),nextPageToken')
+    const mediaItemsRes = response.body?.mediaItems as types.MediaItemIdRes[];
+    if (mediaItemsRes) {
+      mediaItems = mediaItems.concat(mediaItemsRes.map((mediaItem) => {
+        return { mediaId: mediaItem.id, filename: "Not found" }
+      }));
+    }
+    nextPageToken = response.body?.nextPageToken as string | undefined;
+  } while (nextPageToken);
+  return { mediaItems };
 }
 
 // Parse the response from the API to the format we want to return
 // Matches the AlbumSchema schema defined in ./schemas.ts
-function albumParser(albums: types.AlbumResponse[]): types.Album[] {
+export function albumParser(albums: types.AlbumResponse[]): types.Album[] {
   return albums.map((album) => {
     let { id, title, productUrl, coverPhotoBaseUrl, coverPhotoMediaItemId } = album;
+    let coverPhotoMediaItem: types.Album['coverPhotoMediaItem'] = undefined;
+    if (coverPhotoMediaItemId) {
+      coverPhotoMediaItem = {
+        filename: "Not found",
+        mediaId: coverPhotoMediaItemId,
+      }
+    }
     return {
       albumId: id,
       title,
       url: productUrl,
       mediaItems: [],
       coverPhoto: `${coverPhotoBaseUrl}=w2048-h1024`,
-      coverPhotoMediaItem: coverPhotoMediaItemId,
+      coverPhotoMediaItem,
     }
   });
-}
-
-export async function syncAlbums(
-  context: coda.SyncExecutionContext,
-): Promise<coda.GenericSyncFormulaResult> {
-  let url = `${ApiUrl}/albums`;
-  let { continuation } = context.sync;
-  if (continuation && continuation.nextAlbumsPageToken) {
-    url = coda.withQueryParams(url, { pageToken: continuation.nextAlbumsPageToken });
-  }
-  let response = await context.fetcher.fetch({
-    method: "GET",
-    url,
-    headers: { "Content-Type": "application/json" },
-  });
-  let nextAlbumsPageToken;
-  if (response.body.nextPageToken) {
-    nextAlbumsPageToken = response.body.nextPageToken;
-  }
-  let albums: types.Album[] = [];
-  if (response.body.albums) {
-    let albumsRes = response.body.albums as types.AlbumResponse[];
-    albums = albumParser(albumsRes);
-    albums.forEach(async (album) => {
-      do {
-        let mediaItemsRes = await getMediaItems(context, album.albumId, continuation);
-        ({ continuation } = mediaItemsRes);
-        album.mediaItems = mediaItemsRes.result;
-      } while (continuation && continuation.nextMediaItemsPageToken);
-    });
-  }
-
-  return {
-    result: albums,
-    continuation: nextAlbumsPageToken ? { nextAlbumsPageToken } : undefined,
-  };
 }

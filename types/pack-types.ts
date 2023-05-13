@@ -1,8 +1,11 @@
 import { ShareInfo } from "./api-types";
 // Pack types
 
-export interface MediaItem {
-  mediaId: string;
+export interface MediaItemId {
+  mediaId: string,
+}
+
+export interface MediaItem extends MediaItemId {
   filename: string;
   mediaType: string;
   mimeType: string;
@@ -14,12 +17,16 @@ export interface MediaItem {
   url: string;
 }
 
+export interface MediaItemReference extends MediaItemId {
+  filename: "Not found";
+}
+
 export interface Album {
   albumId: string;
   title: string;
   url: string;
   shareInfo?: ShareInfo;
-  mediaItems: MediaItem[];
+  mediaItems: MediaItemReference[] | undefined;
   coverPhoto: string;
-  coverPhotoMediaItem: string | undefined; // TODO: find a way to make this a MediaItem
+  coverPhotoMediaItem: MediaItemReference | undefined;
 }

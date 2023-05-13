@@ -36,8 +36,10 @@ interface ContributorInfo {
   displayName: string;
 }
 
-export interface MediaItemResponse {
-  id: string;
+export interface MediaItemIdRes {
+  id: string,
+};
+export interface MediaItemResponse extends MediaItemIdRes {
   description: string;
   productUrl: string;
   baseUrl: string;
@@ -107,6 +109,11 @@ export enum MediasContentCategories {
   Whiteboards = "WHITEBOARDS",
 }
 
+export enum MediaFeature {
+  None = "NONE",
+  Favorites = "FAVORITES",
+}
+
 // filter object when "searching" for media items
 export interface MediaItemsFilter {
   dateFilter?: {
@@ -124,14 +131,14 @@ export interface MediaItemsFilter {
     mediaTypes: MediaTypes[],
   }
   featureFilter?: {
-    includedFeatures: ["NONE" | "FAVORITES"],
+    includedFeatures: [MediaFeature],
   };
   includeArchivedMedia?: boolean;
   excludeNonAppCreatedData?: boolean;
 }
 
 export interface ApiResponse {
-  mediaItems?: MediaItemResponse[];
+  mediaItems?: MediaItemResponse[] | MediaItemIdRes[];
   albums?: AlbumResponse[];
   sharedAlbums?: object[];
   nextPageToken?: string;

@@ -4,7 +4,7 @@ import { Filters } from "./filters";
 export class MediaItems {
   constructor(public transport: Transport) { }
 
-  list(pageSize = 100, pageToken?: string) { // range: 25-100
+  list(pageToken?: string, pageSize = 100) { // range: 25-100
     return this.transport.get("mediaItems", { pageSize, pageToken });
   }
 
@@ -12,20 +12,19 @@ export class MediaItems {
     return this.transport.get(`mediaItems/${mediaItemId}`);
   }
 
-  search(albumIdOrFilters: string | Filters, pageSize = 100, pageToken?: string) {
-    const postData: {
+  search(albumIdOrFilters: string | Filters, pageToken?: string, pageSize = 100, fields?: string) {
+    const body: {
       pageSize?: number;
       pageToken?: string;
       albumId?: string;
       filters?: ReturnType<Filters["toJSON"]>;
     } = { pageSize, pageToken }
     if (typeof albumIdOrFilters === "string") {
-      postData.albumId = albumIdOrFilters;
+      body.albumId = albumIdOrFilters;
     } else {
-      postData.filters = albumIdOrFilters.toJSON();
+      body.filters = albumIdOrFilters.toJSON();
     }
-    JSON.stringify(postData);
-    return this.transport.post("mediaItems:search", postData);
+    return this.transport.post("mediaItems:search", { fields }, body);
   }
 
 }
