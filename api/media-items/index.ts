@@ -1,6 +1,7 @@
-import { MediaItem } from "types/pack-types"
 import { Transport } from "api/transport";
 import { Filters } from "./filters";
+import { FetchResponse } from "@codahq/packs-sdk";
+import { ApiResponse } from "types/api-types";
 export class MediaItems {
   constructor(public transport: Transport) { }
 
@@ -11,6 +12,9 @@ export class MediaItems {
   get(mediaItemId: string) {
     return this.transport.get(`mediaItems/${mediaItemId}`);
   }
+
+  search(albumId: string, pageToken?: string, pageSize?: number, fields?: string): Promise<FetchResponse<ApiResponse>>
+  search(filters: Filters, pageToken?: string, pageSize?: number, fields?: string): Promise<FetchResponse<ApiResponse>>;
 
   search(albumIdOrFilters: string | Filters, pageToken?: string, pageSize = 100, fields?: string) {
     const body: {
