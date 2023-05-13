@@ -1,8 +1,6 @@
 import * as coda from "@codahq/packs-sdk";
-import * as types from "./types";
-import { allowedNodeEnvironmentFlags } from "process";
-
-export const ApiUrl = "https://photoslibrary.googleapis.com/v1";
+import * as types from "types/common-types";
+import GPhotos from "./api";
 
 export async function getConnectionName(context: coda.ExecutionContext) {
   let request: coda.FetchRequest = {
@@ -17,46 +15,10 @@ export async function getConnectionName(context: coda.ExecutionContext) {
   return user.name as string;
 }
 
-export async function SyncMediaItems(
-  context: coda.SyncExecutionContext,
-  filters?: types.MediaItemsFilter,
-  albumId?: string,
-): Promise<coda.GenericSyncFormulaResult> {
-  if (filters && albumId || !filters && !albumId) {
-    throw new coda.UserVisibleError("Must provide either filters or albumId");
-  }
-  let { continuation } = context.sync;
-  let body: types.GetMediaItemsPayload = { pageSize: 100 };
-  if (continuation) {
-    body.pageToken = continuation.nextPageToken as string;
-  }
-  if (filters && !albumId) {
-    body.filters = filters;
-  }
-  if (albumId && !filters) {
-    body.albumId = albumId;
-  }
-  let response = await context.fetcher.fetch({
-    method: "POST",
-    url: `${ApiUrl}/mediaItems:search`,
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
-  });
-  let mediaItemsRes = response.body.mediaItems as types.MediaItemResponse[];
-  let nextPageToken;
-  if (response.body.nextPageToken) {
-    nextPageToken = response.body.nextPageToken;
-  }
-  let result: types.MediaItem[];
-
-  if (!mediaItemsRes || mediaItemsRes.length === 0) {
-    return {
-      result: [],
-      continuation: undefined,
-    };
-  }
-
-  result = mediaItemsRes.map((mediaItem) => {
+// Parse the response from the API to the format we want to return
+// Matches the MediaSchema schema defined in ./schemas.ts
+export function mediaItemsParser(mediaItems: types.MediaItemResponse[]): types.MediaItem[] {
+  return mediaItems.map((mediaItem) => {
     let { id, filename, mimeType, description, productUrl } = mediaItem;
     let { creationTime, photo, video, width, height } = mediaItem.mediaMetadata;
     return {
@@ -73,54 +35,44 @@ export async function SyncMediaItems(
       url: productUrl,
     }
   });
-
-  return {
-    result,
-    continuation: nextPageToken ? { nextPageToken } : undefined,
-  };
 }
 
-export async function syncAlbums(
-  context: coda.SyncExecutionContext,
-): Promise<coda.GenericSyncFormulaResult> {
-  let url = `${ApiUrl}/albums`;
-  let { continuation } = context.sync;
-  if (continuation) {
-    url = coda.withQueryParams(url, { pageToken: continuation.nextPageToken });
-  }
-  let response = await context.fetcher.fetch({
-    method: "GET",
-    url,
-    headers: { "Content-Type": "application/json" },
-  });
-  let albumsRes = response.body.albums as types.AlbumResponse[];
-  let nextPageToken;
-  if (response.body.nextPageToken) {
-    nextPageToken = response.body.nextPageToken;
-  }
-  let result: types.Album[];
+export async function getMediaItemsFromAlbum(albumId: string, context: coda.ExecutionContext) {
+  const photos = new GPhotos(context.fetcher);
+  let mediaItems: types.Album['mediaItems'] = [];
+  let nextPageToken: string | undefined;
+  do {
+    const response = await photos.mediaItems.search(albumId, nextPageToken, 100, 'mediaItems(id),nextPageToken')
+    const mediaItemsRes = response.body?.mediaItems as types.MediaItemIdRes[];
+    if (mediaItemsRes) {
+      mediaItems = mediaItems.concat(mediaItemsRes.map((mediaItem) => {
+        return { mediaId: mediaItem.id, filename: "Not found" }
+      }));
+    }
+    nextPageToken = response.body?.nextPageToken as string | undefined;
+  } while (nextPageToken);
+  return { mediaItems };
+}
 
-  if (!albumsRes || albumsRes.length === 0) {
-    return {
-      result: [],
-      continuation: undefined,
-    };
-  }
-
-  result = albumsRes.map((album) => {
-    let { id, title, productUrl, coverPhotoBaseUrl } = album;
+// Parse the response from the API to the format we want to return
+// Matches the AlbumSchema schema defined in ./schemas.ts
+export function albumParser(albums: types.AlbumResponse[]): types.Album[] {
+  return albums.map((album) => {
+    let { id, title, productUrl, coverPhotoBaseUrl, coverPhotoMediaItemId } = album;
+    let coverPhotoMediaItem: types.Album['coverPhotoMediaItem'] = undefined;
+    if (coverPhotoMediaItemId) {
+      coverPhotoMediaItem = {
+        filename: "Not found",
+        mediaId: coverPhotoMediaItemId,
+      }
+    }
     return {
       albumId: id,
       title,
       url: productUrl,
       mediaItems: [],
       coverPhoto: `${coverPhotoBaseUrl}=w2048-h1024`,
-      coverPhotoMediaItem: undefined,
+      coverPhotoMediaItem,
     }
   });
-
-  return {
-    result,
-    continuation: nextPageToken ? { nextPageToken } : undefined,
-  };
 }

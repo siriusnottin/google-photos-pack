@@ -1,5 +1,9 @@
 # Coda.io
 .coda*
+_upload_build
+
+# Other
+*.paw
 
 # Logs
 logs

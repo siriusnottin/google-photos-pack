@@ -1,8 +1,9 @@
 import * as coda from "@codahq/packs-sdk";
 import * as helpers from "./helpers";
 import * as schemas from "./schemas";
-import * as types from "./types";
+import * as types from "./types/api-types";
 import * as params from "./params";
+import GPhotos from "./api";
 
 export const pack = coda.newPack();
 
@@ -39,49 +40,52 @@ pack.addSyncTable({
       params.MediaArchivedOptional,
     ],
     execute: async function ([dateRange, categoriesToInclude, categoriesToExclude, mediaType, favorite, archived], context) {
-      function formatDate(date: Date, dateFormatter: Intl.DateTimeFormat) {
-        const dateParts = dateFormatter.formatToParts(date);
-        return {
-          year: dateParts.find((part) => part.type === "year").value,
-          month: dateParts.find((part) => part.type === "month").value,
-          day: dateParts.find((part) => part.type === "day").value,
-        };
+      let photos = new GPhotos(context.fetcher);
+
+      const filters = new photos.Filters(archived);
+
+      // Date filter
+      if (!dateRange) {
+        throw new coda.UserVisibleError("Date range is required.");
       }
-      const dateFormatter = new Intl.DateTimeFormat("en", {
-        timeZone: context.timezone, // Use the doc's timezone (important!)
-        year: "numeric",
-        month: "numeric",
-        day: "numeric",
-      });
+      const dateFilter = new photos.DateFilter();
+      dateFilter.addRange(dateRange[0], dateRange[1]);
+      filters.setDateFilter(dateFilter);
 
-      let filters: types.MediaItemsFilter = {
-        dateFilter: {
-          ranges: [{
-            "startDate": formatDate(dateRange[0], dateFormatter),
-            "endDate": formatDate(dateRange[1], dateFormatter),
-          }]
-        },
-      };
-
-      if (categoriesToInclude || categoriesToExclude) {
-        filters.contentFilter = {
-          includedContentCategories: (categoriesToInclude) ? categoriesToInclude.map((category) => types.MediasContentCategories[category]) : undefined,
-          excludedContentCategories: (categoriesToExclude) ? categoriesToExclude.map((category) => types.MediasContentCategories[category]) : undefined,
-        };
+      // Content filter
+      const contentFilter = new photos.ContentFilter();
+      switch (categoriesToInclude || categoriesToExclude) {
+        case categoriesToInclude:
+          categoriesToInclude?.forEach((category) => {
+            contentFilter.addIncludedCategory(category as types.MediasContentCategories);
+          });
+          break;
+        case categoriesToExclude:
+          categoriesToExclude?.forEach((category) => {
+            contentFilter.addExcludedCategory(category as types.MediasContentCategories);
+          });
+          break;
       }
+      filters.setContentFilter(contentFilter);
 
-      if (mediaType) {
-        filters.mediaTypeFilter = { mediaTypes: [types.MediaTypes[mediaType]] };
-      }
+      // Media type filter
+      const mediaTypeFilter = new photos.MediaTypeFilter(mediaType as types.MediaTypes);
+      // mediaTypeFilter.setType(mediaType as types.MediaTypes)
+      filters.setMediaTypeFilter(mediaTypeFilter);
 
+      // Feature filter (favorites)
       if (favorite) {
-        filters.featureFilter = { includedFeatures: ["FAVORITES"] }
+        const featureFilter = new photos.FeatureFilter(types.MediaFeature.Favorites)
+        filters.setFeatureFilter(featureFilter);
       }
 
-      if (archived) { filters.includeArchivedMedia = archived }
+      const response = await photos.mediaItems.search(filters, (context.sync.continuation?.nextPageToken as string | undefined))
+      const { nextPageToken, mediaItems } = response?.body ?? {};
 
-      return helpers.SyncMediaItems(context, filters);
-
+      return {
+        result: mediaItems ? helpers.mediaItemsParser(mediaItems as types.MediaItemResponse[]) : null,
+        continuation: nextPageToken ? { nextPageToken } : undefined
+      }
     },
   },
 });
@@ -95,7 +99,24 @@ pack.addSyncTable({
     description: "Sync all albums.",
     parameters: [],
     execute: async function ([], context) {
-      return helpers.syncAlbums(context);
+
+      const photos = new GPhotos(context.fetcher);
+      const response = await photos.albums.list(20, (context.sync.continuation?.nextPageToken as string | undefined));
+      const { albums, nextPageToken } = response?.body;
+      const parsedAlbums = albums ? helpers.albumParser(albums) : null;
+
+      if (parsedAlbums) {
+        for (const album of parsedAlbums) {
+          const { albumId } = album;
+          const { mediaItems } = await helpers.getMediaItemsFromAlbum(albumId, context);
+          album.mediaItems = mediaItems ?? undefined;
+        }
+      }
+
+      return {
+        result: parsedAlbums,
+        continuation: nextPageToken ? { nextPageToken } : undefined
+      }
     }
   }
 });

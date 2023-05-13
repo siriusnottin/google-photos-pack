@@ -36,8 +36,10 @@ interface ContributorInfo {
   displayName: string;
 }
 
-export interface MediaItemResponse {
-  id: string;
+export interface MediaItemIdRes {
+  id: string,
+};
+export interface MediaItemResponse extends MediaItemIdRes {
   description: string;
   productUrl: string;
   baseUrl: string;
@@ -52,7 +54,7 @@ interface SharedAlbumOptions {
   isCommentable: boolean;
 }
 
-interface ShareInfo {
+export interface ShareInfo {
   sharedAlbumOptions: SharedAlbumOptions;
   shareableUrl?: string;
   shareToken: string;
@@ -72,31 +74,10 @@ export interface AlbumResponse {
   coverPhotoMediaItemId: string;
 }
 
-// 
-// Pack types
-
-export interface MediaItem {
-  mediaId: string;
-  filename: string;
-  mediaType: string;
-  mimeType: string;
-  description: string;
-  photoMetadata?: Photo;
-  videoMetadata?: Video;
-  creationTime: string;
-  width: number;
-  height: number;
-  image: string;
-  url: string;
-}
-
-export interface Album {
-  albumId: string;
-  title: string;
-  url: string;
-  mediaItems: MediaItem[];
-  coverPhoto: string;
-  coverPhotoMediaItem: string | undefined;
+export type GPhotosDate = {
+  year?: number;
+  month?: number;
+  day?: number;
 }
 
 export enum MediasContentCategories {
@@ -128,25 +109,18 @@ export enum MediasContentCategories {
   Whiteboards = "WHITEBOARDS",
 }
 
-export enum MediaTypes {
-  Photo = "PHOTO",
-  Video = "VIDEO",
+export enum MediaFeature {
+  None = "NONE",
+  Favorites = "FAVORITES",
 }
 
 // filter object when "searching" for media items
 export interface MediaItemsFilter {
-  dateFilter: {
+  dateFilter?: {
+    dates: GPhotosDate[];
     ranges: {
-      startDate: {
-        year: string;
-        month: string;
-        day: string;
-      };
-      endDate: {
-        year: string;
-        month: string;
-        day: string;
-      };
+      startDate: GPhotosDate;
+      endDate: GPhotosDate;
     }[];
   };
   contentFilter?: {
@@ -154,18 +128,24 @@ export interface MediaItemsFilter {
     excludedContentCategories: string[],
   };
   mediaTypeFilter?: {
-    mediaTypes: [string]
+    mediaTypes: MediaTypes[],
   }
   featureFilter?: {
-    includedFeatures: ["NONE" | "FAVORITES"],
+    includedFeatures: [MediaFeature],
   };
   includeArchivedMedia?: boolean;
   excludeNonAppCreatedData?: boolean;
 }
 
-export interface GetMediaItemsPayload {
-  albumId?: string;
-  pageSize?: number;
-  pageToken?: string;
-  filters?: MediaItemsFilter;
+export interface ApiResponse {
+  mediaItems?: MediaItemResponse[] | MediaItemIdRes[];
+  albums?: AlbumResponse[];
+  sharedAlbums?: object[];
+  nextPageToken?: string;
+}
+
+export enum MediaTypes {
+  All = "ALL_MEDIA",
+  Photo = "PHOTO",
+  Video = "VIDEO",
 }
